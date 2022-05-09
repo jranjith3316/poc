@@ -317,7 +317,7 @@ public static String getChildCategory(long parentCategoryId,String dash){
             			                     <label>Search by :</label>
             			                  </div>
             			                  <div>
-            			                     <input class="form-control keyword-align" id="trackingNumber" placeholder='Tracking Number' inlineField="<%= true %>" label="" name="trackingNumber" title="Tracking Number" size="30" value="" />
+            			                     <input class="form-control keyword-align" id="trackingNumber" placeholder='Tracking Number' inlineField="<%= true %>" label="" name="trackingNumber" title="Tracking Number" size="30" value="<%= printNotNull(PortalUtil.getOriginalServletRequest(request).getParameter("trackingNumber")) %>" />
             			                  </div>
             			               </div>
             			            </td>
@@ -330,15 +330,15 @@ public static String getChildCategory(long parentCategoryId,String dash){
             			                     <select label="" name="category" id="category1" inlineField="<%= false %>" class="form-control filterQuery-align">
             			                        <option label="Content Type" value="" />
             			                        <%for(AssetCategory assetCategory:contentType){ %>
-            			                        <option label="<%=assetCategory.getName()%>" value="<%=assetCategory.getCategoryId()%>" />
+            			                        <option label="<%=assetCategory.getName()%>" value="<%=assetCategory.getCategoryId()%>"  <%= (isMatched(assetCategory.getCategoryId()+"", PortalUtil.getOriginalServletRequest(request).getParameter("category1"))) ? "selected" : ""%>/>
             			                        <%if(AssetCategoryLocalServiceUtil.getChildCategoriesCount(assetCategory.getCategoryId())>0){
             			                           List<AssetCategory>	childcategoryList=AssetCategoryLocalServiceUtil.getChildCategories(assetCategory.getCategoryId());
             			                           for(AssetCategory childAssetCategory:childcategoryList){ %>
-            			                        <option label="<%=StringPool.DASH+StringPool.DASH+StringPool.SPACE+childAssetCategory.getName()%>" value="<%=childAssetCategory.getCategoryId()%>" />
+            			                        <option label="<%=StringPool.DASH+StringPool.DASH+StringPool.SPACE+childAssetCategory.getName()%>" value="<%=childAssetCategory.getCategoryId()%>" <%= (isMatched(childAssetCategory.getCategoryId()+"", PortalUtil.getOriginalServletRequest(request).getParameter("category1"))) ? "selected" : ""%>/>
             			                        <%if(AssetCategoryLocalServiceUtil.getChildCategoriesCount(childAssetCategory.getCategoryId())>0){
             			                           List<AssetCategory>	subChildCategoryList=AssetCategoryLocalServiceUtil.getChildCategories(childAssetCategory.getCategoryId());
             			                           for(AssetCategory subChildAssetCategory:subChildCategoryList){ %>
-            			                        <option class="italic-catg" label="<%=StringPool.DASH+StringPool.DASH+StringPool.SPACE+subChildAssetCategory.getName()%>" value="<%=subChildAssetCategory.getCategoryId()%>" />
+            			                        <option class="italic-catg" label="<%=StringPool.DASH+StringPool.DASH+StringPool.SPACE+subChildAssetCategory.getName()%>" value="<%=subChildAssetCategory.getCategoryId()%>" <%= (isMatched(subChildAssetCategory.getCategoryId()+"", PortalUtil.getOriginalServletRequest(request).getParameter("category1"))) ? "selected" : ""%>/>
             			                        <%}}
             			                           %>
             			                        <%}}} %>
@@ -355,15 +355,15 @@ public static String getChildCategory(long parentCategoryId,String dash){
             			                     <select label="" name="category" id="category2" inlineField="<%= false %>" class="form-control filterQuery-align">
             			                        <option label="Project" value="" />
             			                        <%for(AssetCategory assetCategory:project){ %>
-            			                        <option label="<%=assetCategory.getName()%>" value="<%=assetCategory.getCategoryId()%>" />
+            			                        <option label="<%=assetCategory.getName()%>" value="<%=assetCategory.getCategoryId()%>" <%= (isMatched(assetCategory.getCategoryId()+"", PortalUtil.getOriginalServletRequest(request).getParameter("category2"))) ? "selected" : ""%>/>
             			                        <%if(AssetCategoryLocalServiceUtil.getChildCategoriesCount(assetCategory.getCategoryId())>0){
             			                           List<AssetCategory>	childcategoryList=AssetCategoryLocalServiceUtil.getChildCategories(assetCategory.getCategoryId());
             			                           for(AssetCategory childAssetCategory:childcategoryList){ %>
-            			                        <option label="<%=StringPool.DASH+StringPool.DASH+StringPool.SPACE+childAssetCategory.getName()%>" value="<%=childAssetCategory.getCategoryId()%>" />
+            			                        <option label="<%=StringPool.DASH+StringPool.DASH+StringPool.SPACE+childAssetCategory.getName()%>" value="<%=childAssetCategory.getCategoryId()%>" <%= (isMatched(childAssetCategory.getCategoryId()+"", PortalUtil.getOriginalServletRequest(request).getParameter("category2"))) ? "selected" : ""%>/>
             			                        <%if(AssetCategoryLocalServiceUtil.getChildCategoriesCount(childAssetCategory.getCategoryId())>0){
             			                           List<AssetCategory>	subChildCategoryList=AssetCategoryLocalServiceUtil.getChildCategories(childAssetCategory.getCategoryId());
             			                           for(AssetCategory subChildAssetCategory:subChildCategoryList){ %>
-            			                        <option class="italic-catg" label="<%=StringPool.DASH+StringPool.DASH+StringPool.SPACE+subChildAssetCategory.getName()%>" value="<%=subChildAssetCategory.getCategoryId()%>" />
+            			                        <option class="italic-catg" label="<%=StringPool.DASH+StringPool.DASH+StringPool.SPACE+subChildAssetCategory.getName()%>" value="<%=subChildAssetCategory.getCategoryId()%>" <%= (isMatched(subChildAssetCategory.getCategoryId()+"", PortalUtil.getOriginalServletRequest(request).getParameter("category2"))) ? "selected" : ""%>/>
             			                        <%}}
             			                           %>
             			                        <%}}} %>
@@ -380,15 +380,15 @@ public static String getChildCategory(long parentCategoryId,String dash){
             			                     <select label="" name="category" id="year" inlineField="<%= false %>" class="form-control filterQuery-align">
             			                        <option label="Year" value="" />
             			                        <%for(AssetCategory assetCategory:year){ %>
-            			                        <option label="<%=assetCategory.getName()%>" value="<%=assetCategory.getCategoryId()%>" />
+            			                        <option label="<%=assetCategory.getName()%>" value="<%=assetCategory.getCategoryId()%>" <%= (isMatched(assetCategory.getCategoryId()+"", PortalUtil.getOriginalServletRequest(request).getParameter("category3"))) ? "selected" : ""%>/>
             			                        <%if(AssetCategoryLocalServiceUtil.getChildCategoriesCount(assetCategory.getCategoryId())>0){
             			                           List<AssetCategory>	childcategoryList=AssetCategoryLocalServiceUtil.getChildCategories(assetCategory.getCategoryId());
             			                           for(AssetCategory childAssetCategory:childcategoryList){ %>
-            			                        <option label="<%=StringPool.DASH+StringPool.DASH+StringPool.SPACE+childAssetCategory.getName()%>" value="<%=childAssetCategory.getCategoryId()%>" />
+            			                        <option label="<%=StringPool.DASH+StringPool.DASH+StringPool.SPACE+childAssetCategory.getName()%>" value="<%=childAssetCategory.getCategoryId()%>" <%= (isMatched(childAssetCategory.getCategoryId()+"", PortalUtil.getOriginalServletRequest(request).getParameter("category3"))) ? "selected" : ""%>/>
             			                        <%if(AssetCategoryLocalServiceUtil.getChildCategoriesCount(childAssetCategory.getCategoryId())>0){
             			                           List<AssetCategory>	subChildCategoryList=AssetCategoryLocalServiceUtil.getChildCategories(childAssetCategory.getCategoryId());
             			                           for(AssetCategory subChildAssetCategory:subChildCategoryList){ %>
-            			                        <option class="italic-catg" label="<%=StringPool.DASH+StringPool.DASH+StringPool.SPACE+subChildAssetCategory.getName()%>" value="<%=subChildAssetCategory.getCategoryId()%>" />
+            			                        <option class="italic-catg" label="<%=StringPool.DASH+StringPool.DASH+StringPool.SPACE+subChildAssetCategory.getName()%>" value="<%=subChildAssetCategory.getCategoryId()%>" <%= (isMatched(subChildAssetCategory.getCategoryId()+"", PortalUtil.getOriginalServletRequest(request).getParameter("category3"))) ? "selected" : ""%>/>
             			                        <%}}
             			                           %>
             			                        <%}}} %>
@@ -469,13 +469,16 @@ public static String getChildCategory(long parentCategoryId,String dash){
         }
         if(isNotEmpty(searchQuery))
            query = appendMyString(query, "q", searchQuery);
-        if(isNotEmpty(category1))
+        if(isNotEmpty(category1)){
            query = appendMyString(query, "category", category1);
-        if(isNotEmpty(category2))
+           query = appendMyString(query, "category1", category1);
+        }if(isNotEmpty(category2)){
            query = appendMyString(query, "category", category2);
-        if(isNotEmpty(category3))
+           query = appendMyString(query, "category2", category2);
+        }if(isNotEmpty(category3)){
            query = appendMyString(query, "category", category3);
-        if(isNotEmpty(trackingNumber))
+           query = appendMyString(query, "category3", category3);
+        }if(isNotEmpty(trackingNumber))
            query = appendMyString(query, "trackingNumber", trackingNumber);
 
         query += (isNotEmpty(query) ? "&" : "")+"search=advanced";
