@@ -76,8 +76,9 @@ for(AssetCategory assetCategory:classification){
 			year.add(assetChildCategory);
 		}
 	}
-	
 }
+
+year = year.stream().sorted((a1, a2) -> a2.getName().compareTo(a1.getName())).collect(java.util.stream.Collectors.toList());
 
 %>
 
@@ -255,7 +256,7 @@ public static String getChildCategory(long parentCategoryId,String dash){
 							</div>
 						</c:otherwise>
 					</c:choose>
-					<span><a class="link-align" href="javascript:void(0);" id="<portlet:namespace/>displayAdv" >Advanced Search</a></span>
+					<span><a class="link-align" href="javascript:void(0);" id="<portlet:namespace/>displayAdv" > <i id="arrow-toggle" class="icon-chevron-up"></i> Advanced Search</a></span>
 				</div>
 			</aui:fieldset>
 		</aui:form>
@@ -316,7 +317,7 @@ public static String getChildCategory(long parentCategoryId,String dash){
             			                     <label>Search by :</label>
             			                  </div>
             			                  <div>
-            			                     <input class="form-control keyword-align" id="tracking" placeholder='Tracking Number' inlineField="<%= true %>" label="" name="keyword5" title="Tracking Number" size="30" value="" />
+            			                     <input class="form-control keyword-align" id="trackingNumber" placeholder='Tracking Number' inlineField="<%= true %>" label="" name="trackingNumber" title="Tracking Number" size="30" value="" />
             			                  </div>
             			               </div>
             			            </td>
@@ -376,7 +377,8 @@ public static String getChildCategory(long parentCategoryId,String dash){
             			                     <label>Filter by :</label>
             			                  </div>
             			                  <div >
-            			                     <select label="" name="filterQuery3" id="year" inlineField="<%= false %>" class="form-control filterQuery-align">
+            			                     <select label="" name="category" id="year" inlineField="<%= false %>" class="form-control filterQuery-align">
+            			                        <option label="Year" value="" />
             			                        <%for(AssetCategory assetCategory:year){ %>
             			                        <option label="<%=assetCategory.getName()%>" value="<%=assetCategory.getCategoryId()%>" />
             			                        <%if(AssetCategoryLocalServiceUtil.getChildCategoriesCount(assetCategory.getCategoryId())>0){
@@ -402,12 +404,12 @@ public static String getChildCategory(long parentCategoryId,String dash){
             			         <tr>
             			            <td>
             			               <div>
-            			                  <aui:button cssClass="btn-clear" name="clearField" value='Clear' type="cancel" id="clearField" />
+            			                  <aui:button cssClass="btn-color" type="button" value="Clear" onClick="javascript:clearForm();"/>
             			               </div>
             			            </td>
             			            <td>
             			               <div>
-            			                  <aui:button cssClass="btn-clear" name="mySavedSearchField" value='Save Search' id="mySavedSearch" />
+            			                  <aui:button cssClass="btn-color" type="button" value="Save Search" onClick="javascript:saveSearch();"/>
             			               </div>
             			            </td>
             			            <td>
@@ -433,14 +435,25 @@ public static String getChildCategory(long parentCategoryId,String dash){
 
 <script>
 
+    function clearForm(){
+        window.location.href="<%= searchBarPortletDisplayContextCustom.getSearchURL() %>";
+    }
+
+    function saveSearch(){
+       alert("Not implemented yet");
+    }
 
     function search(){
         var keyword1 = $("#keyword1").val();
         var keyword2 = $("#keyword2").val();
         var title = $("#title").val();
+        var trackingNumber = $("#trackingNumber").val();
+
         var operand = $("#operator option:selected").val();
         var category1 = $("#category1 option:selected").val();
         var category2 = $("#category2 option:selected").val();
+        var category3 = $("#year option:selected").val();
+
         var query = "";
         var searchQuery = "";
         if(isNotEmpty(keyword1) && isNotEmpty(operand) && isNotEmpty(keyword2)){
@@ -451,7 +464,6 @@ public static String getChildCategory(long parentCategoryId,String dash){
               query += "keyword1="+keyword1;
         }
         if(isNotEmpty(title)){
-
             searchQuery += " title_<%=themeDisplay.getLanguageId()%>:"+ title;
             query = appendMyString(query, "title", title);
         }
@@ -461,6 +473,10 @@ public static String getChildCategory(long parentCategoryId,String dash){
            query = appendMyString(query, "category", category1);
         if(isNotEmpty(category2))
            query = appendMyString(query, "category", category2);
+        if(isNotEmpty(category3))
+           query = appendMyString(query, "category", category3);
+        if(isNotEmpty(trackingNumber))
+           query = appendMyString(query, "trackingNumber", trackingNumber);
 
         query += (isNotEmpty(query) ? "&" : "")+"search=advanced";
        window.location.href = $('#<portlet:namespace/>fm2').attr('action') + "?" + query;
@@ -492,10 +508,13 @@ $(document).ready(function(){
 <% if(PortalUtil.getOriginalServletRequest(request).getParameter("search") == null
         || !PortalUtil.getOriginalServletRequest(request).getParameter("search").equalsIgnoreCase("advanced")) {%>
 	$("#<portlet:namespace/>advanced-search-blueweb").hide();
+	$("#arrow-toggle").toggleClass("icon-chevron-down icon-chevron-up");
+
 <% }%>
 
     $(".link-align").click(function(){
         $("#<portlet:namespace/>advanced-search-blueweb").toggle();
+        $("#arrow-toggle").toggleClass("icon-chevron-up icon-chevron-down");
     });
 
 });
