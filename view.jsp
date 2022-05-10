@@ -209,6 +209,7 @@ public static String getChildCategory(long parentCategoryId,String dash){
 		</div>
 	</c:when>
 	<c:otherwise>
+		<liferay-portlet:resourceURL id="mySavedSearchURL" var="mySavedSearchURL" portletName="mysavedsearches_WAR_portletpickerportlet" />
 		<aui:form action="<%= searchBarPortletDisplayContextCustom.getSearchURL() %>" method="get" name="fm">
 			<c:if test="<%= !Validator.isBlank(searchBarPortletDisplayContextCustom.getPaginationStartParameterName()) %>">
 				<input class="search-bar-reset-start-page" name="<%= searchBarPortletDisplayContextCustom.getPaginationStartParameterName() %>" type="hidden" value="0" />
@@ -256,6 +257,7 @@ public static String getChildCategory(long parentCategoryId,String dash){
 							</div>
 						</c:otherwise>
 					</c:choose>
+					<span class="icon-question-circle" title="search"><liferay-ui:icon icon="question-circle" markupView="lexicon" message=""/></span>
 					<span><a class="link-align" href="javascript:void(0);" id="<portlet:namespace/>displayAdv" > <i id="arrow-toggle" class="icon-chevron-up"></i> Advanced Search</a></span>
 				</div>
 			</aui:fieldset>
@@ -330,7 +332,7 @@ public static String getChildCategory(long parentCategoryId,String dash){
             			                     <select label="" name="category" id="category1" inlineField="<%= false %>" class="form-control filterQuery-align">
             			                        <option label="Content Type" value="" />
             			                        <%for(AssetCategory assetCategory:contentType){ %>
-            			                        <option label="<%=assetCategory.getName()%>" value="<%=assetCategory.getCategoryId()%>"  <%= (isMatched(assetCategory.getCategoryId()+"", PortalUtil.getOriginalServletRequest(request).getParameter("category1"))) ? "selected" : ""%>/>
+            			                        <option label="<%=assetCategory.getName()%>" value="<%=assetCategory.getCategoryId()%>" <%= (isMatched(assetCategory.getCategoryId()+"", PortalUtil.getOriginalServletRequest(request).getParameter("category1"))) ? "selected" : ""%>/>
             			                        <%if(AssetCategoryLocalServiceUtil.getChildCategoriesCount(assetCategory.getCategoryId())>0){
             			                           List<AssetCategory>	childcategoryList=AssetCategoryLocalServiceUtil.getChildCategories(assetCategory.getCategoryId());
             			                           for(AssetCategory childAssetCategory:childcategoryList){ %>
@@ -338,7 +340,7 @@ public static String getChildCategory(long parentCategoryId,String dash){
             			                        <%if(AssetCategoryLocalServiceUtil.getChildCategoriesCount(childAssetCategory.getCategoryId())>0){
             			                           List<AssetCategory>	subChildCategoryList=AssetCategoryLocalServiceUtil.getChildCategories(childAssetCategory.getCategoryId());
             			                           for(AssetCategory subChildAssetCategory:subChildCategoryList){ %>
-            			                        <option class="italic-catg" label="<%=StringPool.DASH+StringPool.DASH+StringPool.SPACE+subChildAssetCategory.getName()%>" value="<%=subChildAssetCategory.getCategoryId()%>" <%= (isMatched(subChildAssetCategory.getCategoryId()+"", PortalUtil.getOriginalServletRequest(request).getParameter("category1"))) ? "selected" : ""%>/>
+            			                        <option class="italic-catg" label="<%=StringPool.DASH+StringPool.DASH+StringPool.SPACE+subChildAssetCategory.getName()%>" value="<%=subChildAssetCategory.getCategoryId()%>"  <%= (isMatched(subChildAssetCategory.getCategoryId()+"", PortalUtil.getOriginalServletRequest(request).getParameter("category1"))) ? "selected" : ""%>/>
             			                        <%}}
             			                           %>
             			                        <%}}} %>
@@ -355,7 +357,7 @@ public static String getChildCategory(long parentCategoryId,String dash){
             			                     <select label="" name="category" id="category2" inlineField="<%= false %>" class="form-control filterQuery-align">
             			                        <option label="Project" value="" />
             			                        <%for(AssetCategory assetCategory:project){ %>
-            			                        <option label="<%=assetCategory.getName()%>" value="<%=assetCategory.getCategoryId()%>" <%= (isMatched(assetCategory.getCategoryId()+"", PortalUtil.getOriginalServletRequest(request).getParameter("category2"))) ? "selected" : ""%>/>
+            			                        <option label="<%=assetCategory.getName()%>" value="<%=assetCategory.getCategoryId()%>" <%= (isMatched(assetCategory.getCategoryId()+"", PortalUtil.getOriginalServletRequest(request).getParameter("category2"))) ? "selected" : ""%> />
             			                        <%if(AssetCategoryLocalServiceUtil.getChildCategoriesCount(assetCategory.getCategoryId())>0){
             			                           List<AssetCategory>	childcategoryList=AssetCategoryLocalServiceUtil.getChildCategories(assetCategory.getCategoryId());
             			                           for(AssetCategory childAssetCategory:childcategoryList){ %>
@@ -363,7 +365,7 @@ public static String getChildCategory(long parentCategoryId,String dash){
             			                        <%if(AssetCategoryLocalServiceUtil.getChildCategoriesCount(childAssetCategory.getCategoryId())>0){
             			                           List<AssetCategory>	subChildCategoryList=AssetCategoryLocalServiceUtil.getChildCategories(childAssetCategory.getCategoryId());
             			                           for(AssetCategory subChildAssetCategory:subChildCategoryList){ %>
-            			                        <option class="italic-catg" label="<%=StringPool.DASH+StringPool.DASH+StringPool.SPACE+subChildAssetCategory.getName()%>" value="<%=subChildAssetCategory.getCategoryId()%>" <%= (isMatched(subChildAssetCategory.getCategoryId()+"", PortalUtil.getOriginalServletRequest(request).getParameter("category2"))) ? "selected" : ""%>/>
+            			                        <option class="italic-catg" label="<%=StringPool.DASH+StringPool.DASH+StringPool.SPACE+subChildAssetCategory.getName()%>" value="<%=subChildAssetCategory.getCategoryId()%>" <%= (isMatched(subChildAssetCategory.getCategoryId()+"", PortalUtil.getOriginalServletRequest(request).getParameter("category2"))) ? "selected" : ""%> />
             			                        <%}}
             			                           %>
             			                        <%}}} %>
@@ -377,14 +379,14 @@ public static String getChildCategory(long parentCategoryId,String dash){
             			                     <label>Filter by :</label>
             			                  </div>
             			                  <div >
-            			                     <select label="" name="category" id="year" inlineField="<%= false %>" class="form-control filterQuery-align">
+            			                     <select label="" name="category" id="category3" inlineField="<%= false %>" class="form-control filterQuery-align">
             			                        <option label="Year" value="" />
             			                        <%for(AssetCategory assetCategory:year){ %>
             			                        <option label="<%=assetCategory.getName()%>" value="<%=assetCategory.getCategoryId()%>" <%= (isMatched(assetCategory.getCategoryId()+"", PortalUtil.getOriginalServletRequest(request).getParameter("category3"))) ? "selected" : ""%>/>
             			                        <%if(AssetCategoryLocalServiceUtil.getChildCategoriesCount(assetCategory.getCategoryId())>0){
             			                           List<AssetCategory>	childcategoryList=AssetCategoryLocalServiceUtil.getChildCategories(assetCategory.getCategoryId());
             			                           for(AssetCategory childAssetCategory:childcategoryList){ %>
-            			                        <option label="<%=StringPool.DASH+StringPool.DASH+StringPool.SPACE+childAssetCategory.getName()%>" value="<%=childAssetCategory.getCategoryId()%>" <%= (isMatched(childAssetCategory.getCategoryId()+"", PortalUtil.getOriginalServletRequest(request).getParameter("category3"))) ? "selected" : ""%>/>
+            			                        <option label="<%=StringPool.DASH+StringPool.DASH+StringPool.SPACE+childAssetCategory.getName()%>" value="<%=childAssetCategory.getCategoryId()%>" <%= (isMatched(childAssetCategory.getCategoryId()+"", PortalUtil.getOriginalServletRequest(request).getParameter("category3"))) ? "selected" : ""%> />
             			                        <%if(AssetCategoryLocalServiceUtil.getChildCategoriesCount(childAssetCategory.getCategoryId())>0){
             			                           List<AssetCategory>	subChildCategoryList=AssetCategoryLocalServiceUtil.getChildCategories(childAssetCategory.getCategoryId());
             			                           for(AssetCategory subChildAssetCategory:subChildCategoryList){ %>
@@ -409,7 +411,7 @@ public static String getChildCategory(long parentCategoryId,String dash){
             			            </td>
             			            <td>
             			               <div>
-            			                  <aui:button cssClass="btn-color" type="button" value="Save Search" onClick="javascript:saveSearch();"/>
+            			                  <aui:button cssClass="btn-color" type="button" value="Save Search" id="mySavedSearch"/>
             			               </div>
             			            </td>
             			            <td>
@@ -425,6 +427,9 @@ public static String getChildCategory(long parentCategoryId,String dash){
 
 
 		</aui:form>
+		<div class="yui3-skin-sam">
+			<div id="modalConfirmation"></div>
+		</div>
 
 		<aui:script use="liferay-search-bar">
 			new Liferay.Search.SearchBar(A.one('#<portlet:namespace />fm'));
@@ -436,12 +441,17 @@ public static String getChildCategory(long parentCategoryId,String dash){
 <script>
 
     function clearForm(){
-        window.location.href="<%= searchBarPortletDisplayContextCustom.getSearchURL() %>";
+        /*window.location.href="<%= searchBarPortletDisplayContextCustom.getSearchURL() %>";*/
+    	$("#keyword1").val("");
+    	$("#keyword2").val("");
+    	$("#title").val("");
+    	$("#trackingNumber").val("");
+    	$("#operator").val("or");
+    	$("#category1").val("");
+    	$("#category2").val("");
+    	$("#category3").val("");
     }
 
-    function saveSearch(){
-       alert("Not implemented yet");
-    }
 
     function search(){
         var keyword1 = $("#keyword1").val();
@@ -452,7 +462,7 @@ public static String getChildCategory(long parentCategoryId,String dash){
         var operand = $("#operator option:selected").val();
         var category1 = $("#category1 option:selected").val();
         var category2 = $("#category2 option:selected").val();
-        var category3 = $("#year option:selected").val();
+        var category3 = $("#category3 option:selected").val();
 
         var query = "";
         var searchQuery = "";
@@ -467,20 +477,21 @@ public static String getChildCategory(long parentCategoryId,String dash){
             searchQuery += " title_<%=themeDisplay.getLanguageId()%>:"+ title;
             query = appendMyString(query, "title", title);
         }
-        if(isNotEmpty(searchQuery))
+        if(isNotEmpty(searchQuery)){
            query = appendMyString(query, "q", searchQuery);
+        }
         if(isNotEmpty(category1)){
            query = appendMyString(query, "category", category1);
-           query = appendMyString(query, "category1", category1);
-        }if(isNotEmpty(category2)){
+        }
+        if(isNotEmpty(category2)){
            query = appendMyString(query, "category", category2);
-           query = appendMyString(query, "category2", category2);
-        }if(isNotEmpty(category3)){
+        }
+        if(isNotEmpty(category3)){
            query = appendMyString(query, "category", category3);
-           query = appendMyString(query, "category3", category3);
-        }if(isNotEmpty(trackingNumber))
+        }
+        if(isNotEmpty(trackingNumber)){
            query = appendMyString(query, "trackingNumber", trackingNumber);
-
+        }
         query += (isNotEmpty(query) ? "&" : "")+"search=advanced";
        window.location.href = $('#<portlet:namespace/>fm2').attr('action') + "?" + query;
     }
@@ -521,28 +532,111 @@ $(document).ready(function(){
     });
 
 });
+
+
+$("#<portlet:namespace/>mySavedSearch").on('click',function(){
+	YUI().use('aui-modal',
+					function(Y) {
+						var modal = new Y.Modal(
+								{
+									bodyContent : ' Search Title : <input type="text" id="searchTitleTxt"  name="searchTitleTxt"/>',
+									centered : true,
+									headerContent : '',
+									modal : true,
+									render : '#modalConfirmation',
+									destroyOnClose: true,
+   									destroyOnHide: true,
+									width : 400
+								}).render();
+						modal
+								.addToolbar([
+									{
+										label : '<liferay-ui:message key="Save"/>',
+										on : {
+											click : function() {
+									var searchTitle = $('#searchTitleTxt').val();
+										if(searchTitle ==""){
+									 $("#searchTitleTxt").addClass('searchTextTitle');
+								}else{
+									$("#searchTitleTxt").removeClass('searchTextTitle');
+        							savedSearchAjax(searchTitle);
+									modal.hide();
+								}
+											}
+										},
+									},
+										{
+											label : '<liferay-ui:message key="Cancel"/>',
+											on : {
+												click : function() {
+													modal
+															.hide();
+												}
+											}
+										},
+										]);
+					});
+
+});
+
+function savedSearchAjax(searchTitle){
+	var keyword=window.location.search;
+	keyword=keyword.substring(1);
+	var searchTitle=searchTitle;
+	var userId="<%=themeDisplay.getUserId()%>";
+
+
+
+	console.log("${mySavedSearchURL}");
+	console.log(" Userid"+userId);
+	console.log(" keyword"+keyword);
+	console.log(" searchTitle"+searchTitle);
+	  $.ajax({
+		        url: "${mySavedSearchURL}",
+		        type:'POST',
+	 		    dataType: "json",
+		        data: { 
+		                "_mysavedsearches_WAR_portletpickerportlet_keywords":keyword,
+		               "_mysavedsearches_WAR_portletpickerportlet_searchTitle":searchTitle,
+		               "_mysavedsearches_WAR_portletpickerportlet_userId":userId
+			      }
+		    });
+		  
+
+
+		}
+
 </script>
 
 <style>
-.adv-main-div{
-display:none;margin-top:-57px;margin-left: 35px;
+
+#<portlet:namespace/>advanced-search-blueweb {
+	padding:0 15px;
+	padding-bottom: 15px;
 }
+
+.adv-main-div{
+	display:none;
+	margin-top:-57px;
+	margin-left: 35px;
+}
+
 #content .row {
     margin-left: 0px;
     margin-right: 1px !important;
 }
 .aui .control-group{
-margin-bottom:0px !important;
+	margin-bottom:0px !important;
 }
 .filterClass{
-margin-left: 80px!important;
+	margin-left: 80px!important;
 }
 .cssClass.filterClass
 {
-margin-left: 80px!important;
+	margin-left: 80px!important;
 }
 .filterAllign{
-width: 76px !important;
+	width: 76px !important;
 }
 .button-align{
     margin-left: 85px;
@@ -569,26 +663,27 @@ width: 76px !important;
     margin-top: 12px;
     margin-left: 10px;
     }
-    .italic-catg{
+.italic-catg{
     font-style: italic;
 }
 .first-field{
-padding-top:50px;
+	padding-top:50px;
 }
 .filterQuery-align{
-width:160px;
+	width:160px;
 }
 .last-filterQuery{
-margin-bottom: 50px!important;
+	margin-bottom: 50px!important;
 }
 .searchcontainer-content{
-margin-top:50px;
+	display:grid;
+	padding:0 15px;
 }
 .firstKeyWord{
-margin-top:30px;
+	margin-top:30px;
 }
 #_com_liferay_portal_search_web_portlet_SearchPortlet_facetNavigation{
-margin-top:50px;
+	margin-top:50px;
     float: left;
     width: 100%;
 }
@@ -601,7 +696,7 @@ margin-top:50px;
 	width:100%;
 }
 .keyword-align{
-width:150px!important;
+	width:150px!important;
 }
 .single-search{
     margin-bottom: 20px!important;
@@ -661,6 +756,18 @@ border: 1px solid red;
 .search-bar-keywords-input{
 	height:3.6rem;
 }
+.portlet-search-bar .search-bar-keywords-input-wrapper {
+	padding: 0 15px;
+}
+.input-group.search-bar-simple {
+	padding:15px 0;
+}
+.panel-group {
+	padding-bottom: 15px;
+}
 
-
+.icon-question-circle{
+  padding-left: 15px;
+  padding-top: 15px;
+}
 </style>
