@@ -1,0 +1,91 @@
+ENVIRONMENT VARIABLES
+Environment variables are configured within the Operating System (OS). This means the naming convention for environment variables is also determined by the OS.
+
+General guidelines on how to properly construct an environment variable name are:
+
+Names must be defined using uppercase letters, digits, and underscores.
+Names cannot begin with a digit.
+For example, a common Java environment variable that is commonly used: JAVA_HOME
+
+LIFERAY PORTAL PROPERTIES
+When using environment variables, we must follow the general naming convention. But, Liferay portal properties can consist of generally disallowed characters, such as: lowercase letters, periods, brackets, etc.  To use environment variables for Liferay portal properties, we use the following naming convention, which also fulfills the general naming convention requirements mentioned above.
+
+Liferay Naming Convention (LNC)
+Names must start with the prefix LIFERAY_
+Names are converted to lowercase by default.
+Special encodings can be used for representing generally disallowed characters by using constant names provided by DXP 7.0 or using Unicode code point.
+LNC: Using Constant Names in DXP 7.0 
+Using constant names for the special encoding would be the common option. The constant names allow one to utilize common characters, such as: uppercase letters, periods, brackets, etc.  A list of constant names that are available can be found in CharPool.java
+
+In order to use constant names in Liferay, we must also follow these guidelines for the environment variable name:
+
+A constant name must be declared using uppercase letters.
+If there are any '_' characters in a constant name, they must be removed.
+A constant name must be declared using a wrapped pair of '_'.
+Example 1: Simple Portal Property
+
+Portal Property: setup.wizard.enabled=false
+Environment Variable: LIFERAY_SETUP_PERIOD_WIZARD_PERIOD_ENABLED=true
+How It Works:
+
+The name satisfies the guidelines mentioned in the General Naming Convention section.
+The name begins with the prefix: LIFERAY_
+The constant name PERIOD is used by being declared as: _PERIOD_
+Example 2: Complex Portal Property
+
+Portal Property: setup.database.driverClassName[mysql]=com.mysql.jdbc.Driver
+Environment Variable: LIFERAY_SETUP_PERIOD_DATABASE_PERIOD_DRIVER_UPPERCASEC_LASS_UPPERCASEN_AME_OPENBRACKET_MYSQL_CLOSEBRACKET_=com.mysql.jdbc.Driver
+How It Works:
+
+The name satisfies the guidelines mentioned in the General Naming Convention section.
+The name begins with the prefix: LIFERAY_
+The constant name PERIOD is used by being declared as: _PERIOD_
+The portion, driverClassName, involves uppercase characters:
+The constant name UPPER_CASE_C is used by being declared as: _UPPERCASEC_
+The constant name UPPER_CASE_N is used by being declared as: _UPPERCASEN_
+
+The portion, [mysql], involves brackets: 
+
+The constant name OPEN_BRACKET is used by being declared as: _OPENBRACKET_
+
+The constant name CLOSE_BRACKET is used by being declared as _CLOSEBRACKET_ 
+
+LNC: Using Unicode Code Point
+Using Unicode code point values for the special encoding is an option, but it is less readable than using the constant names option. A reference table of Unicode code point values can be found here: Unicode Table
+
+In order to use Unicode code point values, we must also follow these guidelines for the environment variable name:
+
+A code point must be represented by decimal numbers.
+A code point must be declared using a wrapped pair of '_'.
+Example 1: Simple Portal Property
+
+Portal Property: setup.wizard.enabled=false
+Environment Variable: LIFERAY_SETUP_46_WIZARD_46_ENABLED=true
+How It Works:
+
+The name satisfies the guidelines mentioned in the General Naming Convention section.
+The name begins with the prefix: LIFERAY_
+The ‘.’ is being represented by Unicode code point ‘46’ and is being declared as:_46_.
+Example 2: Complex Portal Property
+
+Portal Property: setup.database.driverClassName[mysql]=com.mysql.jdbc.Driver
+Environment Variable: LIFERAY_SETUP_46_DATABASE_46_DRIVER_67_LASS_78_AME_91_MYSQL_93_=com.mysql.jdbc.Driver
+How It Works:
+
+The name satisfies the guidelines mentioned in the General Naming Convention section.
+The name begins with the prefix: LIFERAY_
+The ‘.’ is being represented by Unicode code point ‘46’ and is being declared as: _46_
+
+The portion, driverClassName, involves uppercase characters:
+The uppercase character ‘C’ is being represented by Unicode code point ‘67’ and is being declared as: _67_
+
+The uppercase character ‘N’ is being represented by Unicode code point ‘78’ and is being declared as: _78_
+
+The portion, [mysql], involves brackets:
+
+The ‘[’ is being represented by Unicode code point ‘91’ and is being declared as: _91_
+
+The ‘]’ is being represented by Unicode code point ‘93’ and is being declared as: _93_
+
+OVERRIDE PRIORITIES
+Properties configured through OS environmental variables will take priority over properties configured in portal-ext, setup-wizard, patched, and developer properties files.  However, settings established through the System Settings section of the Configuration Control Panel menu will take priority over environmental variables.
