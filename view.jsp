@@ -50,11 +50,31 @@ page import="com.liferay.portal.search.web.internal.search.bar.portlet.SearchBar
 <%@page import="com.liferay.portal.kernel.util.HttpUtil"%>
 <%@page import="com.liferay.portal.kernel.util.PropsUtil" %>
 <%@page import="javax.servlet.http.HttpServletRequest" %>
+<%@page import="javax.portlet.PortletPreferences"%>
+<%@ page import="com.liferay.portal.kernel.util.GetterUtil"%>
+
 
 <liferay-theme:defineObjects />
 <portlet:defineObjects />
 
 <%
+
+PortletPreferences pref = renderRequest.getPreferences();
+String resultsView = GetterUtil.getString(pref.getValue("resultsView", "recent"));
+
+String searchView = GetterUtil.getString(pref.getValue("searchView", "header"));
+
+String advButtonName = "Advanced Search";
+if(resultsView.equalsIgnoreCase("archive")){
+	advButtonName = "Archive Search";
+}
+
+long resultsYear = GetterUtil.getLong(pref.getValue("resultsYear", "2017"));
+
+String destination = GetterUtil.getString(pref.getValue("destination", ""));
+
+boolean showRecent = resultsView.equalsIgnoreCase("recent");
+
 String randomNamespace = PortalUtil.generateRandomKey(request, "portlet_search_bar") + StringPool.UNDERLINE;
 
 SearchBarPortletDisplayContext searchBarPortletDisplayContextCustom = (SearchBarPortletDisplayContext)java.util.Objects.requireNonNull(request.getAttribute(WebKeys.PORTLET_DISPLAY_CONTEXT));
@@ -62,24 +82,33 @@ SearchBarPortletDisplayContext searchBarPortletDisplayContextCustom = (SearchBar
 
 long userId=themeDisplay.getUserId();
 
+long scropeGroupId = themeDisplay.getScopeGroupId();
+
 
 //ThemeDisplay themeDisplay = (ThemeDisplay)request.getAttribute(com.liferay.portal.kernel.util.WebKeys.THEME_DISPLAY);
 
 // List<AssetCategory> topic=getCategoryByVocabularyName(themeDisplay.getScopeGroupId(),"Topic"); //AssetCategoryFinderUtil.findByG_N(groupId, "Topic");
-List<AssetCategory> project=getCategoryByVocabularyName(themeDisplay.getScopeGroupId(),"Project");//AssetCategoryFinderUtil.findByG_N(groupId, "Project");
-List<AssetCategory> contentType=getCategoryByVocabularyName(themeDisplay.getScopeGroupId(),"Content Type");//AssetCategoryFinderUtil.findByG_N(groupId, "Content Type");
-List<AssetCategory> classification=getCategoryByVocabularyName(themeDisplay.getScopeGroupId(),"Classification");//AssetCategoryFinderUtil.findByG_N(groupId, "Content Type");
-List<AssetCategory> year = new ArrayList<AssetCategory>();
+List<AssetCategory> project=getCategoryByVocabularyName(scropeGroupId,"Project");//AssetCategoryFinderUtil.findByG_N(groupId, "Project");
+List<AssetCategory> contentType=getCategoryByVocabularyName(scropeGroupId,"Content Type");//AssetCategoryFinderUtil.findByG_N(groupId, "Content Type");
+List<AssetCategory> classification=getCategoryByVocabularyName(scropeGroupId,"Classification");//AssetCategoryFinderUtil.findByG_N(groupId, "Content Type");
+List<AssetCategory> recentYears = new ArrayList<AssetCategory>();
+List<AssetCategory> archiveYears = new ArrayList<AssetCategory>();
 for(AssetCategory assetCategory:classification){
 	if(AssetCategoryLocalServiceUtil.getChildCategoriesCount(assetCategory.getCategoryId())>0 && assetCategory.getName().equalsIgnoreCase("Year")){
 		for(AssetCategory assetChildCategory:AssetCategoryLocalServiceUtil.getChildCategories(assetCategory.getCategoryId())){
-			year.add(assetChildCategory);
+			long yearCategory = GetterUtil.getLong(assetChildCategory.getName());
+			if(yearCategory>=resultsYear){
+				recentYears.add(assetChildCategory);
+			}else {
+				archiveYears.add(assetChildCategory);
+			}
+
 		}
 	}
 }
 
-year = year.stream().sorted((a1, a2) -> a2.getName().compareTo(a1.getName())).collect(java.util.stream.Collectors.toList());
-
+recentYears = recentYears.stream().sorted((a1, a2) -> a2.getName().compareTo(a1.getName())).collect(java.util.stream.Collectors.toList());
+archiveYears = archiveYears.stream().sorted((a1, a2) -> a2.getName().compareTo(a1.getName())).collect(java.util.stream.Collectors.toList());
 %>
 
 <%!
@@ -109,14 +138,14 @@ public static List<AssetCategory> getCategorybasedOnVoc(String vocabularyName){
     	e.printStackTrace();
     }
     return categories;
-	
+
 }
 
 public static List<AssetCategory> getCategoryByName(String categoryName){
     List<AssetCategory> categories = new ArrayList();
     DynamicQuery query = DynamicQueryFactoryUtil.forClass(
             AssetCategory.class).add(PropertyFactoryUtil.forName("name").eq(categoryName));
-   
+
     try {
         categories = AssetCategoryLocalServiceUtil.dynamicQuery(query, 0, 1); // we only want to first one
      //   System.out.println("categories..."+categories.size());
@@ -125,7 +154,7 @@ public static List<AssetCategory> getCategoryByName(String categoryName){
     }
 
     return categories;
-	
+
 }
 public static List<AssetCategory> getCategoryByVocabularyName(long groupId,String vocName){
 	List<AssetCategory> categoryList=null;
@@ -133,12 +162,12 @@ public static List<AssetCategory> getCategoryByVocabularyName(long groupId,Strin
 	long gid=groupId;
 	try{
 	 vocabulary=AssetVocabularyLocalServiceUtil.getGroupVocabulary(groupId, vocName);
-	 
+
 	}catch(Exception e){
 		e.printStackTrace();
 		return null;
 	}
-	
+
 	if(Validator.isNotNull( vocabulary)){
 	long vocabularyId=vocabulary.getVocabularyId();
 	long parentId=0;
@@ -149,15 +178,15 @@ public static List<AssetCategory> getCategoryByVocabularyName(long groupId,Strin
             		 vocabularyId)); // then get all categories matching the vocabulary
                      System.out.println("queryCategories id..."+queryCategories);
                      categoryList = AssetVocabularyLocalServiceUtil.dynamicQuery(queryCategories, 0, 100); // let's get some to show
-                     System.out.println("categoryList...."+categoryList.size()); 
-	 */ try { 
+                     System.out.println("categoryList...."+categoryList.size());
+	 */ try {
 	// categoryList=AssetCategoryLocalServiceUtil.getVocabularyCategories(parentId,vocabularyId, -1, -1, null);
 	 categoryList=AssetCategoryLocalServiceUtil.getVocabularyRootCategories(vocabularyId, -1, -1, null);
 	//  System.out.println("categoryList...."+vocName+"....."+categoryList.size());
 	}catch(Exception e){
 	e.printStackTrace();
 	return null;
-	} 
+	}
 	}
 	return categoryList;
 }
@@ -198,6 +227,9 @@ public static String getChildCategory(long parentCategoryId,String dash){
         return given.equalsIgnoreCase(received);
     }
 
+
+
+
 	%>
 
 <c:choose>
@@ -209,8 +241,12 @@ public static String getChildCategory(long parentCategoryId,String dash){
 		</div>
 	</c:when>
 	<c:otherwise>
-		<liferay-portlet:resourceURL id="mySavedSearchURL" var="mySavedSearchURL" portletName="mysavedsearches_WAR_portletpickerportlet" />
-		<aui:form action="<%= searchBarPortletDisplayContextCustom.getSearchURL() %>" method="get" name="fm">
+
+		<c:if test="<%= searchView.equalsIgnoreCase("header") %>">
+
+			<aui:form action="javascript:void(0)" id="basicSearchFormHeader" method="get" name="fm" onSubmit="return basicSearchHeader();">
+
+
 			<c:if test="<%= !Validator.isBlank(searchBarPortletDisplayContextCustom.getPaginationStartParameterName()) %>">
 				<input class="search-bar-reset-start-page" name="<%= searchBarPortletDisplayContextCustom.getPaginationStartParameterName() %>" type="hidden" value="0" />
 			</c:if>
@@ -221,64 +257,89 @@ public static String getChildCategory(long parentCategoryId,String dash){
 				<div class="input-group <%= searchBarPortletDisplayContextCustom.isLetTheUserChooseTheSearchScope() ? "search-bar-scope" : "search-bar-simple" %>">
 					<c:choose>
 						<c:when test="<%= searchBarPortletDisplayContextCustom.isLetTheUserChooseTheSearchScope() %>">
-							<aui:input cssClass="search-bar-keywords-input" data-qa-id="searchInput" id="<%= randomNamespace + HtmlUtil.escapeAttribute(searchBarPortletDisplayContextCustom.getKeywordsParameterName()) %>" label="" name="<%= HtmlUtil.escapeAttribute(searchBarPortletDisplayContextCustom.getKeywordsParameterName()) %>" placeholder='<%= LanguageUtil.get(request, "search-...") %>' title="search" type="text" useNamespace="<%= false %>" value="<%= searchBarPortletDisplayContextCustom.getKeywords() %>" wrapperCssClass="input-group-item input-group-prepend search-bar-keywords-input-wrapper" />
 
-							<aui:select cssClass="search-bar-scope-select" id="<%= randomNamespace + HtmlUtil.escapeAttribute(searchBarPortletDisplayContextCustom.getScopeParameterName()) %>" label="" name="<%= HtmlUtil.escapeAttribute(searchBarPortletDisplayContextCustom.getScopeParameterName()) %>" title="scope" useNamespace="<%= false %>" wrapperCssClass="input-group-item input-group-item-shrink input-group-prepend search-bar-search-select-wrapper">
-								<aui:option label="this-site" selected="<%= searchBarPortletDisplayContextCustom.isSelectedCurrentSiteSearchScope() %>" value="<%= searchBarPortletDisplayContextCustom.getCurrentSiteSearchScopeParameterString() %>" />
+						</c:when>
+						<c:otherwise>
+							<div  id="searchInputHeader" class="input-group-item search-bar-keywords-input-wrapper">
+								<input class="form-control input-group-inset input-group-inset-after search-bar-keywords-input" data-qa-id="searchInputHeader" id="searchInputHeader"
+								name="<%= HtmlUtil.escapeAttribute(searchBarPortletDisplayContextCustom.getKeywordsParameterName()) %>"
+								 placeholder="Search by Keyword, Tracking Number or Title"
+								title="<%= LanguageUtil.get(request, "search") %>" type="text" value="<%= HtmlUtil.escapeAttribute(searchBarPortletDisplayContextCustom.getKeywords()) %>" />
 
-								<c:if test="<%= searchBarPortletDisplayContextCustom.isAvailableEverythingSearchScope() %>">
-									<aui:option label="everything" selected="<%= searchBarPortletDisplayContextCustom.isSelectedEverythingSearchScope() %>" value="<%= searchBarPortletDisplayContextCustom.getEverythingSearchScopeParameterString() %>" />
-								</c:if>
-							</aui:select>
-
-							<div class="input-group-append input-group-item input-group-item-shrink">
-								<clay:button
+								<aui:input name="<%= HtmlUtil.escapeAttribute(searchBarPortletDisplayContextCustom.getScopeParameterName()) %>" type="hidden" value="<%= searchBarPortletDisplayContextCustom.getScopeParameterValue() %>" />
+								<div class="input-group-inset-item input-group-inset-item-after" onClick="basicSearchHeader();">
+									<clay:button
 									ariaLabel='<%= LanguageUtil.get(request, "submit") %>'
 									icon="search"
 									style="secondary"
-									type="submit"
+									type="button"
 								/>
-							</div>
-						</c:when>
-						<c:otherwise>
-							<div class="input-group-item search-bar-keywords-input-wrapper">
-								<input class="form-control input-group-inset input-group-inset-after search-bar-keywords-input" data-qa-id="searchInput" id="<%= randomNamespace %><%= HtmlUtil.escapeAttribute(searchBarPortletDisplayContextCustom.getKeywordsParameterName()) %>" name="<%= HtmlUtil.escapeAttribute(searchBarPortletDisplayContextCustom.getKeywordsParameterName()) %>" placeholder="<%= LanguageUtil.get(request, "search-...") %>" title="<%= LanguageUtil.get(request, "search") %>" type="text" />
-
-								<aui:input name="<%= HtmlUtil.escapeAttribute(searchBarPortletDisplayContextCustom.getScopeParameterName()) %>" type="hidden" value="<%= searchBarPortletDisplayContextCustom.getScopeParameterValue() %>" />
-
-								<div class="input-group-inset-item input-group-inset-item-after">
-									<clay:button
-										ariaLabel='<%= LanguageUtil.get(request, "submit") %>'
-										icon="search"
-										style="unstyled"
-										type="submit"
-									/>
 								</div>
 							</div>
 						</c:otherwise>
 					</c:choose>
-					<span class="icon-question-circle" title="search"><liferay-ui:icon icon="question-circle" markupView="lexicon" message=""/></span>
-					<span><a class="link-align" href="javascript:void(0);" id="<portlet:namespace/>displayAdv" > <i id="arrow-toggle" class="icon-chevron-up"></i> Advanced Search</a></span>
+
+					<c:if test="<%= searchView.equalsIgnoreCase("fullPage") %>">
+						<span class="col-md-8"><a class="link-align" href="javascript:void(0);" id="<portlet:namespace/>displayAdv" > <i id="arrow-toggle-adv" class="icon-chevron-down"></i> <%=advButtonName %></a></span>
+					</c:if>
 				</div>
 			</aui:fieldset>
 		</aui:form>
+
+		</c:if>
+		<c:if test="<%= searchView.equalsIgnoreCase("fullPage") %>">
+		<aui:form action="<%= String.valueOf(searchBarPortletDisplayContextCustom.getSearchURL()) %>" id="basicSearchForm" method="get" name="fm">
+
+			<c:if test="<%= !Validator.isBlank(searchBarPortletDisplayContextCustom.getPaginationStartParameterName()) %>">
+				<input class="search-bar-reset-start-page" name="<%= searchBarPortletDisplayContextCustom.getPaginationStartParameterName() %>" type="hidden" value="0" />
+			</c:if>
+
+			<aui:fieldset cssClass="search-bar">
+				<aui:input cssClass="search-bar-empty-search-input" name="emptySearchEnabled" type="hidden" value="<%= searchBarPortletDisplayContextCustom.isEmptySearchEnabled() %>" />
+
+				<div class="input-group <%= searchBarPortletDisplayContextCustom.isLetTheUserChooseTheSearchScope() ? "search-bar-scope" : "search-bar-simple" %>">
+					<c:choose>
+						<c:when test="<%= searchBarPortletDisplayContextCustom.isLetTheUserChooseTheSearchScope() %>">
+
+						</c:when>
+						<c:otherwise>
+							<div  id="searchInput" class="col-md-4 input-group-item search-bar-keywords-input-wrapper">
+								<input class="form-control input-group-inset input-group-inset-after search-bar-keywords-input" data-qa-id="searchInput" id="searchInput"
+									name="<%= HtmlUtil.escapeAttribute(searchBarPortletDisplayContextCustom.getKeywordsParameterName()) %>"
+									placeholder="Search by Keyword, Tracking Number or Title" title="<%= LanguageUtil.get(request, "search") %>" type="text"
+									value="<%= HtmlUtil.escapeAttribute(searchBarPortletDisplayContextCustom.getKeywords()) %>" />
+
+								<aui:input name="<%= HtmlUtil.escapeAttribute(searchBarPortletDisplayContextCustom.getScopeParameterName()) %>" type="hidden" value="<%= searchBarPortletDisplayContextCustom.getScopeParameterValue() %>" />
+								<div class="input-group-inset-item input-group-inset-item-after">
+									<button type="button" class="search-btn" onClick="javascript:basicSearch();">Search</button>
+								</div>
+							</div>
+						</c:otherwise>
+					</c:choose>
+
+					<c:if test="<%= searchView.equalsIgnoreCase("fullPage") %>">
+						<span class="col-md-8"><a class="link-align" href="javascript:void(0);" id="<portlet:namespace/>displayAdv" > <i id="arrow-toggle-adv" class="icon-chevron-down"></i> <%=advButtonName %></a></span>
+					</c:if>
+				</div>
+			</aui:fieldset>
+		</aui:form>
+
 		<aui:form action="<%= searchBarPortletDisplayContextCustom.getSearchURL() %>" method="get" name="fm2" id="fm2">
-		    <div id='<%= renderResponse.getNamespace() + "advanced-search-blueweb" %>'>
+		    <div id='<%= renderResponse.getNamespace() + "advanced-search-blueweb" %>' class="<%= showRecent ? "hide" : "" %>" >
             				 <div class="row search-layout menu-column">
-            			      <table>
-            			         <tr>
-            			            <td>
+            			      <table class="keywords-table col-md-12">
+            			         <tr class="form-group">
+            			            <td style="vertical-align: top;" class="form-group keywords1">
             			               <div>
             			                  <div>
-            			                     <label>Search by :</label>
-            			                  </div>
-            			                  <div>
-            			                     <input class="form-control keyword-align" id="keyword1" placeholder='Keywords' inlineField="<%= true %>"
-            			                      label="" name="keyword1" value="<%= printNotNull(PortalUtil.getOriginalServletRequest(request).getParameter("keyword1")) %>" title="Keywords" size="30" value="" />
+            			                     <aui:input cssClass="form-control keyword-align" id="keyword1" placeholder='Keywords' inlineField="<%= true %>" style="width:100%;"
+            			                      label="" name="keyword1" value="<%= printNotNull(PortalUtil.getOriginalServletRequest(request).getParameter("keyword1")) %>" title="Keywords" size="30" >
+            			                      	<aui:validator errorMessage="Keyword required to filter search results." name="required"></aui:validator>
+            			                      </aui:input>
             			                  </div>
             			               </div>
             			            </td>
-            			            <td style="vertical-align: bottom;">
+            			            <td style="vertical-align: top;" class="form-group">
             			               <div>
             			                  <aui:col>
             			                     <select class="form-control filterQuery-align" name="operator" id="operator" label="" inlineField="<%= false %>">
@@ -291,11 +352,8 @@ public static String getChildCategory(long parentCategoryId,String dash){
             			                  </aui:col>
             			               </div>
             			            </td>
-            			            <td>
+            			            <td style="vertical-align: top;" class="form-group">
             			               <div >
-            			                  <div >
-            			                     <label>Search by :</label>
-            			                  </div>
             			                  <div >
             			                     <input class="form-control keyword-align" id="keyword2" placeholder='Keywords' inlineField="<%= true %>" label=""
             			                      name="keyword3" title="Keywords" size="30" value="<%= printNotNull(PortalUtil.getOriginalServletRequest(request).getParameter("keyword2")) %>" />
@@ -303,27 +361,14 @@ public static String getChildCategory(long parentCategoryId,String dash){
             			                  </div>
             			               </div>
             			            </td>
-            			            <td>
+            			            <td style="vertical-align: top;" class="form-group">
             			               <div >
-            			                  <div >
-            			                     <label>Search by :</label>
-            			                  </div>
-            			                  <div>
-            			                     <input class="form-control keyword-align" id="title" placeholder='Title'  inlineField="<%= true %>" label="" name="keyword4" title="Title" size="30" value="<%= printNotNull(PortalUtil.getOriginalServletRequest(request).getParameter("title")) %>" />
-            			                  </div>
+            			                  <span><a class="link-align-basic hide" href="javascript:void(0);" id="<portlet:namespace/>displayBasic" > <i id="arrow-toggle-basic" class="icon-chevron-up"></i> Basic Search</a></span>
             			               </div>
             			            </td>
-            			            <td>
-            			               <div >
-            			                  <div >
-            			                     <label>Search by :</label>
-            			                  </div>
-            			                  <div>
-            			                     <input class="form-control keyword-align" id="trackingNumber" placeholder='Tracking Number' inlineField="<%= true %>" label="" name="trackingNumber" title="Tracking Number" size="30" value="<%= printNotNull(PortalUtil.getOriginalServletRequest(request).getParameter("trackingNumber")) %>" />
-            			                  </div>
-            			               </div>
-            			            </td>
-            			            <td>
+           			            </tr>
+        			            <tr class="form-group">
+            			            <td  style="vertical-align: top;" class="form-group">
             			               <div>
             			                  <div >
             			                     <label>Filter by :</label>
@@ -348,7 +393,7 @@ public static String getChildCategory(long parentCategoryId,String dash){
             			                  </div>
             			               </div>
             			            </td>
-            			            <td>
+            			            <td  style="vertical-align: top;" class="form-group">
             			               <div>
             			                  <div >
             			                     <label>Filter by :</label>
@@ -373,7 +418,7 @@ public static String getChildCategory(long parentCategoryId,String dash){
             			                  </div>
             			               </div>
             			            </td>
-            			            <td>
+            			            <td  style="vertical-align: top;" class="form-group">
             			               <div>
             			                  <div >
             			                     <label>Filter by :</label>
@@ -381,59 +426,62 @@ public static String getChildCategory(long parentCategoryId,String dash){
             			                  <div >
             			                     <select label="" name="category" id="category3" inlineField="<%= false %>" class="form-control filterQuery-align">
             			                        <option label="Year" value="" />
-            			                        <%for(AssetCategory assetCategory:year){ %>
-            			                        <option label="<%=assetCategory.getName()%>" value="<%=assetCategory.getCategoryId()%>" <%= (isMatched(assetCategory.getCategoryId()+"", PortalUtil.getOriginalServletRequest(request).getParameter("category3"))) ? "selected" : ""%>/>
-            			                        <%if(AssetCategoryLocalServiceUtil.getChildCategoriesCount(assetCategory.getCategoryId())>0){
-            			                           List<AssetCategory>	childcategoryList=AssetCategoryLocalServiceUtil.getChildCategories(assetCategory.getCategoryId());
-            			                           for(AssetCategory childAssetCategory:childcategoryList){ %>
-            			                        <option label="<%=StringPool.DASH+StringPool.DASH+StringPool.SPACE+childAssetCategory.getName()%>" value="<%=childAssetCategory.getCategoryId()%>" <%= (isMatched(childAssetCategory.getCategoryId()+"", PortalUtil.getOriginalServletRequest(request).getParameter("category3"))) ? "selected" : ""%> />
-            			                        <%if(AssetCategoryLocalServiceUtil.getChildCategoriesCount(childAssetCategory.getCategoryId())>0){
-            			                           List<AssetCategory>	subChildCategoryList=AssetCategoryLocalServiceUtil.getChildCategories(childAssetCategory.getCategoryId());
-            			                           for(AssetCategory subChildAssetCategory:subChildCategoryList){ %>
-            			                        <option class="italic-catg" label="<%=StringPool.DASH+StringPool.DASH+StringPool.SPACE+subChildAssetCategory.getName()%>" value="<%=subChildAssetCategory.getCategoryId()%>" <%= (isMatched(subChildAssetCategory.getCategoryId()+"", PortalUtil.getOriginalServletRequest(request).getParameter("category3"))) ? "selected" : ""%>/>
-            			                        <%}}
-            			                           %>
-            			                        <%}}} %>
+												<c:if test="<%= resultsView.equalsIgnoreCase("recent") %>">
+													<%for(AssetCategory assetCategory:recentYears){ %>
+													<option label="<%=assetCategory.getName()%>" value="<%=assetCategory.getCategoryId()%>" <%= (isMatched(assetCategory.getCategoryId()+"", PortalUtil.getOriginalServletRequest(request).getParameter("category3"))) ? "selected" : ""%>/>
+													<%if(AssetCategoryLocalServiceUtil.getChildCategoriesCount(assetCategory.getCategoryId())>0){
+													List<AssetCategory>	childcategoryList=AssetCategoryLocalServiceUtil.getChildCategories(assetCategory.getCategoryId());
+													for(AssetCategory childAssetCategory:childcategoryList){ %>
+													<option label="<%=StringPool.DASH+StringPool.DASH+StringPool.SPACE+childAssetCategory.getName()%>" value="<%=childAssetCategory.getCategoryId()%>" <%= (isMatched(childAssetCategory.getCategoryId()+"", PortalUtil.getOriginalServletRequest(request).getParameter("category3"))) ? "selected" : ""%> />
+													<%if(AssetCategoryLocalServiceUtil.getChildCategoriesCount(childAssetCategory.getCategoryId())>0){
+													List<AssetCategory>	subChildCategoryList=AssetCategoryLocalServiceUtil.getChildCategories(childAssetCategory.getCategoryId());
+													for(AssetCategory subChildAssetCategory:subChildCategoryList){ %>
+													<option class="italic-catg" label="<%=StringPool.DASH+StringPool.DASH+StringPool.SPACE+subChildAssetCategory.getName()%>" value="<%=subChildAssetCategory.getCategoryId()%>" <%= (isMatched(subChildAssetCategory.getCategoryId()+"", PortalUtil.getOriginalServletRequest(request).getParameter("category3"))) ? "selected" : ""%>/>
+													<%}}
+													%>
+													<%}}} %>
+												</c:if>
+												<c:if test="<%= resultsView.equalsIgnoreCase("archive") %>">
+													<%for(AssetCategory assetCategory:archiveYears){ %>
+													<option label="<%=assetCategory.getName()%>" value="<%=assetCategory.getCategoryId()%>" <%= (isMatched(assetCategory.getCategoryId()+"", PortalUtil.getOriginalServletRequest(request).getParameter("category3"))) ? "selected" : ""%>/>
+													<%if(AssetCategoryLocalServiceUtil.getChildCategoriesCount(assetCategory.getCategoryId())>0){
+													List<AssetCategory>	childcategoryList=AssetCategoryLocalServiceUtil.getChildCategories(assetCategory.getCategoryId());
+													for(AssetCategory childAssetCategory:childcategoryList){ %>
+													<option label="<%=StringPool.DASH+StringPool.DASH+StringPool.SPACE+childAssetCategory.getName()%>" value="<%=childAssetCategory.getCategoryId()%>" <%= (isMatched(childAssetCategory.getCategoryId()+"", PortalUtil.getOriginalServletRequest(request).getParameter("category3"))) ? "selected" : ""%> />
+													<%if(AssetCategoryLocalServiceUtil.getChildCategoriesCount(childAssetCategory.getCategoryId())>0){
+													List<AssetCategory>	subChildCategoryList=AssetCategoryLocalServiceUtil.getChildCategories(childAssetCategory.getCategoryId());
+													for(AssetCategory subChildAssetCategory:subChildCategoryList){ %>
+													<option class="italic-catg" label="<%=StringPool.DASH+StringPool.DASH+StringPool.SPACE+subChildAssetCategory.getName()%>" value="<%=subChildAssetCategory.getCategoryId()%>" <%= (isMatched(subChildAssetCategory.getCategoryId()+"", PortalUtil.getOriginalServletRequest(request).getParameter("category3"))) ? "selected" : ""%>/>
+													<%}}
+													%>
+													<%}}} %>
+												</c:if>
             			                     </select>
             			                  </div>
             			               </div>
             			            </td>
-            			         </tr>
-            			      </table>
-            			   </div>
-            			   <div class="row search-layout menu-column">
-            			      <table>
-            			         <tr>
-            			            <td>
+            			            <td class="form-group adv-search-buttons">
             			               <div>
             			                  <aui:button cssClass="btn-color" type="button" value="Clear" onClick="javascript:clearForm();"/>
-            			               </div>
-            			            </td>
-            			            <td>
-            			               <div>
-            			                  <aui:button cssClass="btn-color" type="button" value="Save Search" id="mySavedSearch"/>
-            			               </div>
-            			            </td>
-            			            <td>
-            			               <div>
+
             			                  <input type="hidden" name="advSearch" value="advSearch" />
-            			                  <aui:button cssClass="btn-color" type="button" value="Search" onClick="javascript:search();"/>
+            			                  <aui:button cssClass="search-btn" type="button" value="<%=advButtonName %>" onClick="javascript:search();"/>
             			               </div>
             			            </td>
             			         </tr>
             			      </table>
             			   </div>
+
             				</div>
 
 
 		</aui:form>
+		</c:if>
 		<div class="yui3-skin-sam">
 			<div id="modalConfirmation"></div>
 		</div>
 
-		<aui:script use="liferay-search-bar">
-			new Liferay.Search.SearchBar(A.one('#<portlet:namespace />fm'));
-		</aui:script>
+
 	</c:otherwise>
 </c:choose>
 
@@ -442,7 +490,7 @@ public static String getChildCategory(long parentCategoryId,String dash){
 
     function clearForm(){
         /*window.location.href="<%= searchBarPortletDisplayContextCustom.getSearchURL() %>";*/
-    	$("#keyword1").val("");
+    	$("#<portlet:namespace />keyword1").val("");
     	$("#keyword2").val("");
     	$("#title").val("");
     	$("#trackingNumber").val("");
@@ -450,11 +498,45 @@ public static String getChildCategory(long parentCategoryId,String dash){
     	$("#category1").val("");
     	$("#category2").val("");
     	$("#category3").val("");
+    	$(".search-bar-keywords-input").val("");
+    	window.history.pushState(null,null, window.location.pathname);
     }
 
 
+    function basicSearchHeader(){
+    	var tag = "<%= resultsView%>";
+
+    	var portalURL = "<%=themeDisplay.getPortalURL()%>/web/fepoc<%= destination %>";
+
+    	var searchInput = document.querySelector('input[id="searchInputHeader"]').value;
+
+    	var query = "q="+searchInput;
+        query = query +"&tag=<%=resultsView %>";
+
+        window.location.href = portalURL + "?" + query;
+        return false;
+    }
+
+    function basicSearch(){
+    	var tag = "<%= resultsView%>";
+
+    	var portalURL = "<%=themeDisplay.getPortalURL()%>/web/fepoc<%= destination %>";
+
+    	var searchInput = document.querySelector('input[id="searchInput"]').value;
+
+
+    	var query = "q="+searchInput;
+        query = query +"&tag=<%=resultsView %>";
+
+        window.location.href = portalURL + "?" + query;
+    }
+
     function search(){
-        var keyword1 = $("#keyword1").val();
+
+        var keyword1 = $("#<portlet:namespace />keyword1").val();
+        if (keyword1 == "") {
+            return false;
+          }
         var keyword2 = $("#keyword2").val();
         var title = $("#title").val();
         var trackingNumber = $("#trackingNumber").val();
@@ -472,9 +554,13 @@ public static String getChildCategory(long parentCategoryId,String dash){
         } else if(isNotEmpty(keyword1)){
               searchQuery += keyword1;
               query += "keyword1="+keyword1;
-        }
+        }else if(isNotEmpty(keyword2)){
+            searchQuery += keyword2;
+            query += "keyword2="+keyword2;
+      	}
         if(isNotEmpty(title)){
-            searchQuery += " title_<%=themeDisplay.getLanguageId()%>:"+ title;
+           /*searchQuery += "title_<%=themeDisplay.getLanguageId()%>:"+ title;*/
+            searchQuery += "+"+ title;
             query = appendMyString(query, "title", title);
         }
         if(isNotEmpty(searchQuery)){
@@ -482,17 +568,20 @@ public static String getChildCategory(long parentCategoryId,String dash){
         }
         if(isNotEmpty(category1)){
            query = appendMyString(query, "category", category1);
+           query = appendMyString(query, "category1", category1);
         }
         if(isNotEmpty(category2)){
            query = appendMyString(query, "category", category2);
+           query = appendMyString(query, "category2", category2);
         }
         if(isNotEmpty(category3)){
            query = appendMyString(query, "category", category3);
+           query = appendMyString(query, "category3", category3);
         }
         if(isNotEmpty(trackingNumber)){
            query = appendMyString(query, "trackingNumber", trackingNumber);
         }
-        query += (isNotEmpty(query) ? "&" : "")+"search=advanced";
+        query += (isNotEmpty(query) ? "&" : "")+"search=advanced&tag=<%= resultsView%>";
        window.location.href = $('#<portlet:namespace/>fm2').attr('action') + "?" + query;
     }
 
@@ -518,101 +607,72 @@ public static String getChildCategory(long parentCategoryId,String dash){
         return value != null && value != "";
     }
 
-$(document).ready(function(){
-<% if(PortalUtil.getOriginalServletRequest(request).getParameter("search") == null
-        || !PortalUtil.getOriginalServletRequest(request).getParameter("search").equalsIgnoreCase("advanced")) {%>
-	$("#<portlet:namespace/>advanced-search-blueweb").hide();
-	$("#arrow-toggle").toggleClass("icon-chevron-down icon-chevron-up");
 
-<% }%>
+
+$(document).ready(function(){
+
+	$(".portlet-layout.row.row2").css("background","#fff");
+	<% if(PortalUtil.getOriginalServletRequest(request).getParameter("tag") != null || PortalUtil.getOriginalServletRequest(request).getParameter("q") != null) {%>
+		$(".portlet-layout.row.row2").css("background","#EBEBEB");
+	<% } %>
+	<% if(PortalUtil.getOriginalServletRequest(request).getParameter("search") == null
+        || !PortalUtil.getOriginalServletRequest(request).getParameter("search").equalsIgnoreCase("advanced")) {%>
+		//$("#<portlet:namespace/>advanced-search-blueweb").addClass("hide");
+		$("#arrow-toggle").toggleClass("icon-chevron-down icon-chevron-up");
+
+	    $("#searchInput").removeClass("hide");
+	    $("#<portlet:namespace/>displayAdv").removeClass("hide");
+	    //$("#arrow-toggle").removeClass("icon-chevron-up icon-chevron-down");
+
+	    $("#<portlet:namespace/>displayBasic").removeClass("hide");
+
+	<% } else {%>
+
+		$("#searchInput").addClass("hide");
+		$("#<portlet:namespace/>displayAdv").addClass("hide");
+		$("#<portlet:namespace/>displayBasic").removeClass("hide");
+		$("#<portlet:namespace/>advanced-search-blueweb").removeClass("hide");
+	<% }  %>
+
+	<% if(themeDisplay.getURLCurrent().contains("archive")){%>
+		$("#searchInput").addClass("hide");
+		$("#<portlet:namespace/>displayBasic").addClass("hide");
+		$("#<portlet:namespace/>displayAdv").addClass("hide");
+	<%}%>
 
     $(".link-align").click(function(){
-        $("#<portlet:namespace/>advanced-search-blueweb").toggle();
-        $("#arrow-toggle").toggleClass("icon-chevron-up icon-chevron-down");
+        $("#<portlet:namespace/>advanced-search-blueweb").toggleClass("hide");
+        $("#searchInput").addClass("hide");
+
+        //$("#arrow-toggle").toggleClass("icon-chevron-down icon-chevron-down");
+
+        $("#<portlet:namespace/>displayBasic").removeClass("hide");
+        $("#<portlet:namespace/>displayAdv").addClass("hide");
+
+        $("#<portlet:namespace />keyword1").focus();
     });
 
-});
+    $(".link-align-basic").click(function(){
+        $("#<portlet:namespace/>advanced-search-blueweb").addClass("hide");
+        $("#searchInput").removeClass("hide");
+        //$("#arrow-toggle").removeClass("icon-chevron-up icon-chevron-down");
 
+        $("#<portlet:namespace/>displayBasic").addClass("hide");
+        $("#<portlet:namespace/>displayAdv").removeClass("hide");
+    });
 
-$("#<portlet:namespace/>mySavedSearch").on('click',function(){
-	YUI().use('aui-modal',
-					function(Y) {
-						var modal = new Y.Modal(
-								{
-									bodyContent : ' Search Title : <input type="text" id="searchTitleTxt"  name="searchTitleTxt"/>',
-									centered : true,
-									headerContent : '',
-									modal : true,
-									render : '#modalConfirmation',
-									destroyOnClose: true,
-   									destroyOnHide: true,
-									width : 400
-								}).render();
-						modal
-								.addToolbar([
-									{
-										label : '<liferay-ui:message key="Save"/>',
-										on : {
-											click : function() {
-									var searchTitle = $('#searchTitleTxt').val();
-										if(searchTitle ==""){
-									 $("#searchTitleTxt").addClass('searchTextTitle');
-								}else{
-									$("#searchTitleTxt").removeClass('searchTextTitle');
-        							savedSearchAjax(searchTitle);
-									modal.hide();
-								}
-											}
-										},
-									},
-										{
-											label : '<liferay-ui:message key="Cancel"/>',
-											on : {
-												click : function() {
-													modal
-															.hide();
-												}
-											}
-										},
-										]);
-					});
+    var searchInput = document.querySelector('input[id="searchInput"]').value;
+	$("#<portlet:namespace />keyword1").val(searchInput);
+	$("#<portlet:namespace />keyword1").focus();
 
 });
-
-function savedSearchAjax(searchTitle){
-	var keyword=window.location.search;
-	keyword=keyword.substring(1);
-	var searchTitle=searchTitle;
-	var userId="<%=themeDisplay.getUserId()%>";
-
-
-
-	console.log("${mySavedSearchURL}");
-	console.log(" Userid"+userId);
-	console.log(" keyword"+keyword);
-	console.log(" searchTitle"+searchTitle);
-	  $.ajax({
-		        url: "${mySavedSearchURL}",
-		        type:'POST',
-	 		    dataType: "json",
-		        data: { 
-		                "_mysavedsearches_WAR_portletpickerportlet_keywords":keyword,
-		               "_mysavedsearches_WAR_portletpickerportlet_searchTitle":searchTitle,
-		               "_mysavedsearches_WAR_portletpickerportlet_userId":userId
-			      }
-		    });
-		  
-
-
-		}
 
 </script>
 
 <style>
 
 #<portlet:namespace/>advanced-search-blueweb {
-	padding:0 15px;
-	padding-bottom: 15px;
+	padding:15px;
 }
 
 .adv-main-div{
@@ -621,10 +681,7 @@ function savedSearchAjax(searchTitle){
 	margin-left: 35px;
 }
 
-#content .row {
-    margin-left: 0px;
-    margin-right: 1px !important;
-}
+
 .aui .control-group{
 	margin-bottom:0px !important;
 }
@@ -642,10 +699,6 @@ function savedSearchAjax(searchTitle){
     margin-left: 85px;
     margin-top: 10px;
 }
-.btn-color{
-    background: #5484a1!important;
-        color: #f9f9f9!important;
-}
 .btn-clear{
     background: rgb(128, 128, 128)!important;
     color: white!important;
@@ -653,11 +706,11 @@ function savedSearchAjax(searchTitle){
 .adv_search_field{
     margin: auto;
     width: 50%;
-   
+
     padding-bottom: 20px!important;
     margin-bottom: 20px!important;
 }
-.link-align{
+.link-align,.link-align-basic{
     float: right;
     margin-right: 10px;
     margin-top: 12px;
@@ -669,15 +722,18 @@ function savedSearchAjax(searchTitle){
 .first-field{
 	padding-top:50px;
 }
-.filterQuery-align{
-	width:160px;
+/* #category2{
+	width: 23rem;
 }
+#category3{
+	width: 10rem;
+}  */
 .last-filterQuery{
 	margin-bottom: 50px!important;
 }
 .searchcontainer-content{
 	display:grid;
-	padding:0 15px;
+	/* padding:0 15px; */
 }
 .firstKeyWord{
 	margin-top:30px;
@@ -695,9 +751,9 @@ function savedSearchAjax(searchTitle){
 	float:left;
 	width:100%;
 }
-.keyword-align{
+/* .keyword-align{
 	width:150px!important;
-}
+} */
 .single-search{
     margin-bottom: 20px!important;
 }
@@ -725,26 +781,26 @@ border: 1px solid red;
 	color: #064D81;
 }
 
-.asset-entry-title .lexicon-icon.lexicon-icon-shortcut {
+/*.asset-entry-title .lexicon-icon.lexicon-icon-shortcut {
 	height: 3rem;
     width: 3rem;
     margin-top: 10px;
 	margin-left: 10px;
-}
+}*/
 .asset-entry .asset-entry-title {
 	font-size: 18px;
 }
 .asset-entry .text-default, .asset-entry .asset-entry-date {
-	
+
 	color: #1E1E1E;
 }
 .asset-entry .asset-entry-type {
 	width:100px;
 }
 
-.row.search-layout.menu-column {
+/* .row.search-layout.menu-column {
 	width: 80%;
-}
+} */
 .list-group-notification .list-group-item {
 	background: #F9FAFA;
     border-bottom: 1px solid #ccc;
@@ -754,20 +810,99 @@ border: 1px solid red;
 }
 
 .search-bar-keywords-input{
-	height:3.6rem;
+	height:4rem;
 }
-.portlet-search-bar .search-bar-keywords-input-wrapper {
-	padding: 0 15px;
+#searchInput {
+	padding: 15px 30px;
+	max-width: 65%;
+
 }
-.input-group.search-bar-simple {
+/* .input-group.search-bar-simple {
 	padding:15px 0;
-}
+} */
 .panel-group {
-	padding-bottom: 15px;
+	padding: 10px 0;
 }
 
 .icon-question-circle{
   padding-left: 15px;
   padding-top: 15px;
 }
+
+#modalConfirmation .yui3-widget-mask{
+  z-index:10 !important;
+}
+
+#modalConfirmation .modal-dialog{
+	z-index:100 !important;
+}
+
+.custom-control-label-text{
+	font-size:15px;
+}
+
+.input-group-item .input-group-inset-after.form-control {
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
+    border-right-width: 1px;
+    padding-right: 5px;
+}
+#searchInput .input-group-inset-item-after{
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
+    //width: 40px;
+    height: 40px;
+    background: #064D81 !important;
+    border-radius: 5px;
+    opacity: 1;
+    margin-left:10px;
+
+}
+#searchInput .search-btn, .adv-search-buttons .search-btn{
+	border: none;
+    background: #064D81 !important;
+    color: #fff !important;
+    margin-right:0;
+}
+.adv-search-buttons .search-btn{
+	width: 15rem;
+}
+.adv-search-buttons {
+	vertical-align:bottom;
+
+}
+.adv-search-buttons .btn-color{
+	margin-left:30px
+}
+
+.portlet-layout.row.row2{
+/* 	background: #EBEBEB; */
+	margin:0 20px !important;
+	border-radius: 5px;
+}
+
+.lfr-panel.panel-default .panel-heading {
+	border-radius: 5px;
+}
+.portlet-column-content.empty {
+	padding:0px;
+}
+
+.search-facet .panel-body{
+	background-color: #fff;
+  		border: 1px solid #ccc;
+	z-index: 9;
+	position: absolute;
+	width: 100%;
+}
+#searchInputHeader .btn.btn-secondary {
+	color: #FFF;
+    border-color: #00A6D2;
+    background: #00A6D2;
+}
+
+.keywords1 .form-group.form-group-inline.input-text-wrapper {
+	width:100%;
+}
+
 </style>
