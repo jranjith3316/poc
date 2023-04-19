@@ -4,3 +4,29 @@ https://help.liferay.com/hc/en-us/articles/360028818632-Factory-Configurations
 https://learn.liferay.com/dxp/latest/en/building-applications/tooling/liferay-workspace/configuring-liferay-workspace.html 
 https://learn.liferay.com/dxp/latest/en/installation-and-upgrades/installing-liferay/using-liferay-docker-images.html
 https://learn.liferay.com/dxp/latest/en/building-applications/tooling/liferay-workspace/configuring-liferay-workspace.html?highlight=environment%20variables
+
+
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.sql.DataSource;
+
+public class ConnectionPool {
+    public static DataSource getDataSource() throws Exception {
+        Context context = new InitialContext();
+        Context envCtx = (Context) context.lookup("java:comp/env");
+        String jdbcUrl = (String) envCtx.lookup("jdbc_url");
+        String username = (String) envCtx.lookup("jdbc_username");
+        String password = (String) envCtx.lookup("jdbc_password");
+
+        HikariConfig config = new HikariConfig();
+        config.setJdbcUrl(jdbcUrl);
+        config.setUsername(username);
+        config.setPassword(password);
+        config.setDriverClassName("com.mysql.jdbc.Driver");
+        config.setMaximumPoolSize(10);
+
+        return new HikariDataSource(config);
+    }
+}
