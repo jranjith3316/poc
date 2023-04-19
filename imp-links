@@ -30,3 +30,6 @@ public class ConnectionPool {
         return new HikariDataSource(config);
     }
 }
+
+jdbc.default.connection.pool.provider=hikaricp
+jdbc.default.jndi.name=jdbc/LiferayPool
