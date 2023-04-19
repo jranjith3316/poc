@@ -93,3 +93,35 @@ public class MyDataSource extends BaseDataSource {
 
 }
 
+public class CustomDataSource implements DataSource {
+
+    private final DataSource dataSource;
+
+    public CustomDataSource() {
+        // initialize the datasource
+        dataSource = createDataSource();
+    }
+
+    private DataSource createDataSource() {
+        // create and configure the datasource
+        HikariConfig config = new HikariConfig();
+        config.setJdbcUrl("jdbc:mysql://localhost/mydatabase");
+        config.setUsername("myuser");
+        config.setPassword("mypassword");
+        config.setMaximumPoolSize(10);
+        return new HikariDataSource(config);
+    }
+
+    @Override
+    public Connection getConnection() throws SQLException {
+        return dataSource.getConnection();
+    }
+
+    @Override
+    public Connection getConnection(String username, String password) throws SQLException {
+        return dataSource.getConnection(username, password);
+    }
+
+    // other methods from the javax.sql.DataSource interface
+
+}
