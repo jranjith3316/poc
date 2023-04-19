@@ -33,3 +33,25 @@ public class ConnectionPool {
 
 jdbc.default.connection.pool.provider=hikaricp
 jdbc.default.jndi.name=jdbc/LiferayPool
+
+public class MyDataSource extends com.zaxxer.hikari.HikariDataSource {
+
+   public MyDataSource() {
+      Context initContext;
+      try {
+         initContext = new InitialContext();
+         Context envContext = (Context) initContext.lookup("java:/comp/env");
+         setJdbcUrl(envContext.lookup("jdbc/datasource/url").toString());
+         setUsername(envContext.lookup("jdbc/datasource/username").toString());
+         setPassword(envContext.lookup("jdbc/datasource/password").toString());
+         setDriverClassName(envContext.lookup("jdbc/datasource/driverClassName").toString());
+         setMaximumPoolSize(Integer.parseInt(envContext.lookup("jdbc/datasource/maxActive").toString()));
+         setMinimumIdle(Integer.parseInt(envContext.lookup("jdbc/datasource/minIdle").toString()));
+         setIdleTimeout(Integer.parseInt(envContext.lookup("jdbc/datasource/idleTimeout").toString()));
+         setConnectionTimeout(Integer.parseInt(envContext.lookup("jdbc/datasource/connectionTimeout").toString()));
+      } catch (NamingException e) {
+         e.printStackTrace();
+      }
+   }
+}
+
