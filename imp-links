@@ -62,3 +62,34 @@ public class MyDataSource extends com.zaxxer.hikari.HikariDataSource {
           dataSourceClassName="com.mysql.cj.jdbc.MysqlDataSource"
           maximumPoolSize="10"
           jdbcUrl="jdbc:mysql://localhost:3306/mydatabase" />
+          
+          import com.liferay.portal.kernel.dao.jdbc.DataAccess;
+import com.liferay.portal.kernel.dao.jdbc.DataSourceFactory;
+import com.liferay.portal.kernel.dao.jdbc.PoolConnectionHandler;
+import com.liferay.portal.kernel.dao.jdbc.pool.BaseDataSource;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
+
+import java.sql.Connection;
+import java.sql.SQLException;
+
+import javax.sql.DataSource;
+
+public class MyDataSource extends BaseDataSource {
+
+    public MyDataSource() {
+        HikariConfig config = new HikariConfig();
+        config.setJdbcUrl("jdbc:mysql://localhost:3306/mydatabase");
+        config.setUsername("root");
+        config.setPassword("mypassword");
+
+        setDataSource(new HikariDataSource(config));
+    }
+
+    @Override
+    public Connection getConnection() throws SQLException {
+        return super.getConnection();
+    }
+
+}
+
