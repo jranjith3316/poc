@@ -55,3 +55,10 @@ public class MyDataSource extends com.zaxxer.hikari.HikariDataSource {
    }
 }
 
+
+<Resource name="jdbc/MyCustomDataSource" auth="Container"
+          type="javax.sql.DataSource"
+          factory="com.zaxxer.hikari.HikariJNDIFactory"
+          dataSourceClassName="com.mysql.cj.jdbc.MysqlDataSource"
+          maximumPoolSize="10"
+          jdbcUrl="jdbc:mysql://localhost:3306/mydatabase" />
