@@ -185,3 +185,36 @@ public class IAMSecretKeyReader {
     }
 }
 
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.secretsmanager.SecretsManagerClient;
+import software.amazon.awssdk.services.secretsmanager.model.GetSecretValueRequest;
+import software.amazon.awssdk.services.secretsmanager.model.GetSecretValueResponse;
+
+public class RDSSecretKeyReader {
+
+    public static String retrieveIAMUserSecretKey(String secretName) {
+        SecretsManagerClient secretsManagerClient = SecretsManagerClient.builder()
+                .region(Region.AWS_GLOBAL)
+                .build();
+
+        GetSecretValueRequest request = GetSecretValueRequest.builder()
+                .secretId(secretName)
+                .build();
+
+        GetSecretValueResponse response = secretsManagerClient.getSecretValue(request);
+        String secretKey = response.secretString();
+
+        secretsManagerClient.close();
+
+        return secretKey;
+    }
+
+    public static void main(String[] args) {
+        String secretName = "<SECRET_NAME>";
+
+        String secretKey = retrieveIAMUserSecretKey(secretName);
+        System.out.println("IAM User Secret Key: " + secretKey);
+    }
+}
+
+
