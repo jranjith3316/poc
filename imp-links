@@ -125,3 +125,63 @@ public class CustomDataSource implements DataSource {
     // other methods from the javax.sql.DataSource interface
 
 }
+
+
+
+plugins {
+    id 'java'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'software.amazon.awssdk:rds:2.16.48' // AWS SDK RDS dependency
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs 'src/main/java'
+        }
+    }
+}
+
+import software.amazon.awssdk.auth.credentials.*;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.rds.RdsClient;
+import software.amazon.awssdk.services.rds.model.*;
+
+public class IAMSecretKeyReader {
+
+    public static String retrieveIAMUserSecretKey() {
+        // Create an instance of the AWS SDK RDS client
+        RdsClient rdsClient = RdsClient.builder().region(Region.AWS_GLOBAL).build();
+
+        // Set the name of your AWS RDS IAM user
+        String iamUserName = "<IAM_USER_NAME>";
+
+        // Create a request to list the IAM database authentication credentials
+        ListDBClusterAuthTokensRequest request = ListDBClusterAuthTokensRequest.builder()
+                .dbClusterIdentifier("<DB_CLUSTER_IDENTIFIER>")
+                .maxRecords(1)
+                .filter(i -> i.attributeName("username").attributeValues(iamUserName))
+                .build();
+
+        // Retrieve the IAM user secret key from AWS RDS IAM
+        ListDBClusterAuthTokensResponse response = rdsClient.listDBClusterAuthTokens(request);
+        String secretKey = response.nextToken().toString(); // Assuming only one token is retrieved
+
+        // Close the AWS SDK RDS client
+        rdsClient.close();
+
+        return secretKey;
+    }
+
+    public static void main(String[] args) {
+        String secretKey = retrieveIAMUserSecretKey();
+        System.out.println("IAM User Secret Key: " + secretKey);
+    }
+}
+
