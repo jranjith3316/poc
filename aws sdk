@@ -245,3 +245,6 @@ Caused by: java.lang.ClassNotFoundException: software.amazon.awssdk.protocols.js
 	... 49 more
 
 
+An error occurred: Unable to load credentials from any of the providers in the chain AwsCredentialsProviderChain(credentialsProviders=[ProfileCredentialsProvider(profileName=svcawsbwadm, profileFile=ProfileFile(profilesAndSectionsMap=[])), SystemPropertyCredentialsProvider()]) : [ProfileCredentialsProvider(profileName=svcawsbwadm, profileFile=ProfileFile(profilesAndSectionsMap=[])): Profile file contained no credentials for profile 'svcawsbwadm': ProfileFile(profilesAndSectionsMap=[]), SystemPropertyCredentialsProvider(): Unable to load credentials from system settings. Access key must be specified either via environment variable (AWS_ACCESS_KEY_ID) or system property (aws.accessKeyId).]
+
+
