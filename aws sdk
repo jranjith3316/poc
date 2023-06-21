@@ -71,3 +71,18 @@ public class EC2InfoPrinter {
         }
     }
 }
+
+
+SdkClientException cannot be resolved to a type
+
+No exception of type Ec2Exception can be thrown; an exception type must be a subclass of Throwable
+
+The method close() is undefined for the type Ec2Client
+
+Type mismatch: cannot convert from InstanceStateName to String
+
+The type software.amazon.awssdk.core.SdkPojo cannot be resolved. It is indirectly referenced from required .class files
+
+The type software.amazon.awssdk.core.exception.SdkClientException cannot be resolved. It is indirectly referenced from required .class files
+
+The method build() is undefined for the type Ec2ClientBuilder
