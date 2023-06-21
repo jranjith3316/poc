@@ -354,3 +354,10 @@ public class AWSEC2InfoPrinter {
 }
 
 
+The type software.amazon.awssdk.core.exception.SdkClientException cannot be resolved. It is indirectly referenced from required .class files
+
+The method build() is undefined for the type Ec2ClientBuilder
+
+The type software.amazon.awssdk.utils.builder.CopyableBuilder cannot be resolved. It is indirectly referenced from required .class files
+
+The method build() is undefined for the type Filter.Builder
