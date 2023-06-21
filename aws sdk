@@ -165,3 +165,20 @@ public class EC2InfoPrinter {
 }
 
 Caused by: java.lang.NoClassDefFoundError: software/amazon/awssdk/auth/credentials/AwsCredentialsProvider
+
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProviderChain;
+import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.SystemPropertyCredentialsProvider;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.ec2.Ec2Client;
+import software.amazon.awssdk.services.ec2.model.*;
+
+public class EC2InfoPrinter {
+
+    public static void main(String[] args) {
+        // Create the AWS credentials provider chain
+        AwsCredentialsProvider credentialsProvider = AwsCredentialsProviderChain.builder()
+                .addCredentialsProvider(ProfileCredentialsProvider.create("custom-profile"))
+                .addCredentialsProvider(SystemPropertyCredentialsProvider.create())
+                .build();
