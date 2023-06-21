@@ -164,3 +164,4 @@ public class EC2InfoPrinter {
     }
 }
 
+Caused by: java.lang.NoClassDefFoundError: software/amazon/awssdk/auth/credentials/AwsCredentialsProvider
