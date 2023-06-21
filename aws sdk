@@ -86,3 +86,81 @@ The type software.amazon.awssdk.core.SdkPojo cannot be resolved. It is indirectl
 The type software.amazon.awssdk.core.exception.SdkClientException cannot be resolved. It is indirectly referenced from required .class files
 
 The method build() is undefined for the type Ec2ClientBuilder
+
+
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.ec2.Ec2Client;
+import software.amazon.awssdk.services.ec2.model.*;
+
+public class EC2InfoPrinter {
+    public static void main(String[] args) {
+        try {
+            // Create an instance of the AWS EC2 client
+            Ec2Client ec2Client = Ec2Client.builder()
+                    .region(Region.AWS_GLOBAL)
+                    .credentialsProvider(DefaultCredentialsProvider.create())
+                    .build();
+
+            // Get the current instance ID from instance metadata
+            String currentInstanceId = getInstanceIdFromMetadata();
+            System.out.println("Current Instance ID: " + currentInstanceId);
+            System.out.println();
+
+            // Describe instances
+            DescribeInstancesResponse response = ec2Client.describeInstances();
+            for (Reservation reservation : response.reservations()) {
+                for (Instance instance : reservation.instances()) {
+                    // Retrieve instance details
+                    String instanceId = instance.instanceId();
+                    String instanceType = instance.instanceTypeAsString();
+                    InstanceState state = instance.state();
+                    String publicIpAddress = instance.publicIpAddress();
+                    String privateIpAddress = instance.privateIpAddress();
+
+                    // Print instance information
+                    System.out.println("Instance ID: " + instanceId);
+                    System.out.println("Instance Type: " + instanceType);
+                    System.out.println("State: " + state.nameAsString());
+                    System.out.println("Public IP Address: " + publicIpAddress);
+                    System.out.println("Private IP Address: " + privateIpAddress);
+
+                    // Check if the current instance
+                    if (instanceId.equals(currentInstanceId)) {
+                        System.out.println("** This is the current logged-in instance **");
+                    }
+
+                    System.out.println(); // Add empty line between instances
+                }
+            }
+
+            // Close the EC2 client
+            ec2Client.close();
+        } catch (Exception e) {
+            System.err.println("An error occurred: " + e.getMessage());
+        }
+    }
+
+    private static String getInstanceIdFromMetadata() {
+        try {
+            String url = "http://169.254.169.254/latest/meta-data/instance-id";
+            java.net.HttpURLConnection conn = (java.net.HttpURLConnection) new java.net.URL(url).openConnection();
+            conn.setRequestMethod("GET");
+            conn.setConnectTimeout(1000);
+            conn.setReadTimeout(1000);
+            int status = conn.getResponseCode();
+            if (status == 200) {
+                java.io.BufferedReader br = new java.io.BufferedReader(new java.io.InputStreamReader(conn.getInputStream()));
+                String line;
+                if ((line = br.readLine()) != null) {
+                    return line;
+                }
+                br.close();
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to retrieve current instance ID: " + e.getMessage());
+        }
+        return null;
+    }
+}
+
