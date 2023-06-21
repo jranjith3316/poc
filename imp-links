@@ -217,4 +217,66 @@ public class RDSSecretKeyReader {
     }
 }
 
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.ec2.Ec2Client;
+import software.amazon.awssdk.services.ec2.model.*;
+
+public class AWSEC2InfoPrinter {
+    public static void main(String[] args) {
+        // Create an instance of the AWS EC2 client
+        Ec2Client ec2Client = Ec2Client.builder()
+                .region(Region.AWS_GLOBAL)
+                .build();
+
+        // Describe instances
+        DescribeInstancesResponse response = ec2Client.describeInstances();
+
+        // Iterate over the reservations and instances
+        for (Reservation reservation : response.reservations()) {
+            for (Instance instance : reservation.instances()) {
+                // Retrieve instance details
+                String instanceId = instance.instanceId();
+                String publicDnsName = instance.publicDnsName();
+                String privateIpAddress = instance.privateIpAddress();
+                String region = instance.placement().availabilityZone();
+                String organization = instance.tags().stream()
+                        .filter(tag -> tag.key().equals("Organization"))
+                        .findFirst()
+                        .map(Tag::value)
+                        .orElse("Unknown");
+
+                // Print instance information
+                System.out.println("Instance ID: " + instanceId);
+                System.out.println("Public DNS Name: " + publicDnsName);
+                System.out.println("Private IP Address: " + privateIpAddress);
+                System.out.println("Region: " + region);
+                System.out.println("Organization: " + organization);
+                System.out.println("Active Ports:");
+
+                // Describe security groups to retrieve active ports
+                DescribeSecurityGroupsResponse securityGroupsResponse = ec2Client.describeSecurityGroups(
+                        DescribeSecurityGroupsRequest.builder()
+                                .filters(Filter.builder()
+                                        .name("instance-id")
+                                        .values(instanceId)
+                                        .build())
+                                .build()
+                );
+
+                for (SecurityGroup securityGroup : securityGroupsResponse.securityGroups()) {
+                    for (IpPermission ipPermission : securityGroup.ipPermissions()) {
+                        System.out.println("- Protocol: " + ipPermission.ipProtocol());
+                        System.out.println("  From Port: " + ipPermission.fromPort());
+                        System.out.println("  To Port: " + ipPermission.toPort());
+                    }
+                }
+
+                System.out.println(); // Add empty line between instances
+            }
+        }
+
+        // Close the EC2 client
+        ec2Client.close();
+    }
+}
 
