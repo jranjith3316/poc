@@ -748,4 +748,23 @@ public class RdsIamHikariDataSource extends HikariDataSource {
     }
 }
 
+public class MainTest {
+    public static void main(String[] args) {
+        // Create an instance of RdsIamHikariDataSource
+        RdsIamHikariDataSource dataSource = new RdsIamHikariDataSource();
+        
+        // Set the necessary configuration properties
+        dataSource.setJdbcUrl("jdbc:mysql://your-rds-instance-endpoint:3306/your-database");
+        dataSource.setUsername("your-username");
+        
+        // Get a connection using the data source
+        try (Connection connection = dataSource.getConnection()) {
+            // Use the connection as needed
+            // ...
+            System.out.println("Successfully connected to the database!");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+}
 
