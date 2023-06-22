@@ -571,3 +571,14 @@ public class RdsIamHikariDataSource extends HikariDataSource {
   ...
 </Context>
 
+------
+import java.util.AbstractMap;
+import java.util.Map;
+
+private Map.Entry<String, Integer> getHostnamePort(String jdbcUrl) {
+    var slashing = jdbcUrl.indexOf("//") + 2;
+    var sub = jdbcUrl.substring(slashing, jdbcUrl.indexOf("/", slashing));
+    var splitted = sub.split(":");
+    return new AbstractMap.SimpleEntry<>(splitted[0], Integer.parseInt(splitted[1]));
+}
+
