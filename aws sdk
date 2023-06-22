@@ -771,3 +771,173 @@ public class MainTest {
 
 [Root exception is java.lang.ClassCastException: class com.liferay.fepoc.aws.RdsIamHikariDataSource cannot be cast to class javax.naming.spi.ObjectFactory (com.liferay.fepoc.aws.RdsIamHikariDataSource is in unnamed module of loader java.net.URLClassLoader @4b85612c; javax.naming.spi.ObjectFactory is in module java.naming of loader 'bootstrap')]
 
+=======================================
+
+import com.amazonaws.auth.InstanceProfileCredentialsProvider;
+import com.amazonaws.auth.AWSCredentialsProvider;
+import com.amazonaws.services.rds.auth.GetIamAuthTokenRequest;
+import com.amazonaws.services.rds.auth.RdsIamAuthTokenGenerator;
+
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.SQLException;
+
+public class AWSIAMRoleDataSource implements DataSource {
+    private final String jdbcUrl;
+    private final String region;
+
+    public AWSIAMRoleDataSource(String jdbcUrl, String region) {
+        this.jdbcUrl = jdbcUrl;
+        this.region = region;
+    }
+
+    @Override
+    public Connection getConnection() throws SQLException {
+        String iamAuthToken = generateAuthToken();
+        // Create a connection using the JDBC URL and the IAM auth token
+        // For example:
+        // Connection connection = DriverManager.getConnection(jdbcUrl + "?user=user&password=" + iamAuthToken);
+        // Replace 'user' with the appropriate database username
+        
+        // TODO: Implement the connection creation logic using the JDBC URL and IAM auth token
+
+        return null; // Replace with the created connection
+    }
+
+    @Override
+    public Connection getConnection(String username, String password) throws SQLException {
+        throw new UnsupportedOperationException("Not supported");
+    }
+
+    // Other methods of the DataSource interface can be implemented as per requirement
+
+    private String generateAuthToken() {
+        AWSCredentialsProvider credentialsProvider = InstanceProfileCredentialsProvider.getInstance();
+        RdsIamAuthTokenGenerator authTokenGenerator = RdsIamAuthTokenGenerator.builder()
+                .credentials(credentialsProvider)
+                .region(region)
+                .build();
+
+        GetIamAuthTokenRequest authTokenRequest = GetIamAuthTokenRequest.builder()
+                .hostname(getHostnameFromJdbcUrl(jdbcUrl))
+                .port(getPortFromJdbcUrl(jdbcUrl))
+                .userName(getUsernameFromJdbcUrl(jdbcUrl))
+                .build();
+
+        return authTokenGenerator.getAuthToken(authTokenRequest);
+    }
+
+    private String getHostnameFromJdbcUrl(String jdbcUrl) {
+        // Extract the hostname from the JDBC URL
+        // Implement the extraction logic based on your JDBC URL format
+        return null;
+    }
+
+    private int getPortFromJdbcUrl(String jdbcUrl) {
+        // Extract the port from the JDBC URL
+        // Implement the extraction logic based on your JDBC URL format
+        return 0;
+    }
+
+    private String getUsernameFromJdbcUrl(String jdbcUrl) {
+        // Extract the username from the JDBC URL
+        // Implement the extraction logic based on your JDBC URL format
+        return null;
+    }
+}
+-------
+
+import com.amazonaws.auth.InstanceProfileCredentialsProvider;
+import com.amazonaws.auth.AWSCredentialsProvider;
+import com.amazonaws.services.rds.auth.GetIamAuthTokenRequest;
+import com.amazonaws.services.rds.auth.RdsIamAuthTokenGenerator;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
+
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.SQLException;
+
+public class CustomDataSourceExample {
+
+    private static final String JNDI_NAME = "jdbc/YourJNDIResourceName";
+    private static final String REGION = "your-aws-region";
+
+    public static void main(String[] args) {
+        try {
+            // Create the initial context
+            Context initialContext = new InitialContext();
+
+            // Perform JNDI lookup to retrieve the data source
+            DataSource jndiDataSource = (DataSource) initialContext.lookup(JNDI_NAME);
+
+            // Customize the HikariCP configuration
+            HikariConfig hikariConfig = new HikariConfig();
+            hikariConfig.setDataSource(jndiDataSource);
+
+            // Generate the IAM auth token
+            String iamAuthToken = generateAuthToken();
+
+            // Set the IAM auth token as the password in the HikariCP configuration
+            hikariConfig.setPassword(iamAuthToken);
+
+            // Create the HikariDataSource with the customized configuration
+            HikariDataSource dataSource = new HikariDataSource(hikariConfig);
+
+            // Get a connection from the data source
+            Connection connection = dataSource.getConnection();
+
+            // Use the connection for your database operations
+
+            // Close the connection
+            connection.close();
+
+            // Close the data source
+            dataSource.close();
+        } catch (NamingException e) {
+            // Handle the NamingException appropriately
+            e.printStackTrace();
+        } catch (SQLException e) {
+            // Handle the SQLException appropriately
+            e.printStackTrace();
+        }
+    }
+
+    private static String generateAuthToken() {
+        AWSCredentialsProvider credentialsProvider = InstanceProfileCredentialsProvider.getInstance();
+        RdsIamAuthTokenGenerator authTokenGenerator = RdsIamAuthTokenGenerator.builder()
+                .credentials(credentialsProvider)
+                .region(REGION)
+                .build();
+
+        GetIamAuthTokenRequest authTokenRequest = GetIamAuthTokenRequest.builder()
+                .hostname(getHostnameFromJdbcUrl(JNDI_NAME))
+                .port(getPortFromJdbcUrl(JNDI_NAME))
+                .userName(getUsernameFromJdbcUrl(JNDI_NAME))
+                .build();
+
+        return authTokenGenerator.getAuthToken(authTokenRequest);
+    }
+
+    private static String getHostnameFromJdbcUrl(String jdbcUrl) {
+        // Extract the hostname from the JDBC URL
+        // Implement the extraction logic based on your JDBC URL format
+        return null;
+    }
+
+    private static int getPortFromJdbcUrl(String jdbcUrl) {
+        // Extract the port from the JDBC URL
+        // Implement the extraction logic based on your JDBC URL format
+        return 0;
+    }
+
+    private static String getUsernameFromJdbcUrl(String jdbcUrl) {
+        // Extract the username from the JDBC URL
+        // Implement the extraction logic based on your JDBC URL format
+        return null;
+    }
+}
+------
