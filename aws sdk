@@ -666,3 +666,5 @@ public class RdsIamHikariDataSource extends HikariDataSource {
         }
     }
 }
+
+The type com.amazonaws.auth.AWSCredentialsProvider cannot be resolved. It is indirectly referenced from required .class files
