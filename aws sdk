@@ -453,4 +453,121 @@ public class RdsIamHikariDataSource extends HikariDataSource {
     }
 }
 
+---------------------------------------------------
+
+import org.postgresql.Driver;
+
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.Properties;
+
+public class CustomPostgreSQLDriver extends Driver {
+
+    @Override
+    public Connection connect(String url, Properties info) throws SQLException {
+        DataSource dataSource = getDataSource();
+        Connection connection = dataSource.getConnection();
+        return connection;
+    }
+
+    private DataSource getDataSource() throws SQLException {
+        try {
+            Context context = new InitialContext();
+            return (DataSource) context.lookup("java:/comp/env/jdbc/LiferayPool");
+        } catch (NamingException e) {
+            throw new SQLException("Failed to lookup DataSource", e);
+        }
+    }
+}
+
+
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
+import com.amazonaws.regions.DefaultAwsRegionProviderChain;
+import com.amazonaws.services.rds.auth.GetIamAuthTokenRequest;
+import com.amazonaws.services.rds.auth.RdsIamAuthTokenGenerator;
+import com.zaxxer.hikari.HikariDataSource;
+
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.Properties;
+
+public class RdsIamHikariDataSource extends HikariDataSource {
+
+    @Override
+    public String getPassword() {
+        return getToken();
+    }
+
+    private String getToken() {
+        try {
+            Context context = new InitialContext();
+            DataSource dataSource = (DataSource) context.lookup("java:/comp/env/jdbc/LiferayPool");
+            String jdbcUrl = dataSource.getConnection().getMetaData().getURL();
+            return generateAuthToken(jdbcUrl);
+        } catch (NamingException | SQLException e) {
+            // Handle the exception
+            return null;
+        }
+    }
+
+    private String generateAuthToken(String jdbcUrl) {
+        var region = new DefaultAwsRegionProviderChain().getRegion();
+        var hostnamePort = getHostnamePort(jdbcUrl);
+
+        RdsIamAuthTokenGenerator generator = RdsIamAuthTokenGenerator.builder()
+            .credentials(new DefaultAWSCredentialsProviderChain())
+            .region(region)
+            .build();
+
+        GetIamAuthTokenRequest request = GetIamAuthTokenRequest.builder()
+            .hostname(hostnamePort.getFirst())
+            .port(hostnamePort.getSecond())
+            .userName(getUsername())
+            .build();
+
+        return generator.getAuthToken(request);
+    }
+
+    private Pair<String, Integer> getHostnamePort(String jdbcUrl) {
+        var slashing = jdbcUrl.indexOf("//") + 2;
+        var sub = jdbcUrl.substring(slashing, jdbcUrl.indexOf("/", slashing));
+        var splitted = sub.split(":");
+        return Pair.of(splitted[0], Integer.parseInt(splitted[1]));
+    }
+}
+
+
+<Context>
+  ...
+  <Resource
+    name="jdbc/LiferayPool"
+    auth="Container"
+    type="javax.sql.DataSource"
+    driverClassName="com.yourpackage.CustomPostgreSQLDriver"
+    url="jdbc:postgresql://<database_host>:<port>/<database_name>"
+    username="<database_username>"
+    password=""
+    factory="com.zaxxer.hikari.HikariJNDIFactory"
+    dataSource.implicitCachingEnabled="true"
+    dataSource.cachePrepStmts="true"
+    dataSource.prepStmtCacheSize="250"
+    dataSource.prepStmtCacheSqlLimit="2048"
+    dataSource.useServerPrepStmts="true"
+    dataSource.useLocalSessionState="true"
+    dataSource.rewriteBatchedStatements="true"
+    dataSource.cacheResultSetMetadata="true"
+    dataSource.cacheServerConfiguration="true"
+    dataSource.elideSetAutoCommits="true"
+    dataSource.maintainTimeStats="false"
+  />
+  ...
+</Context>
 
