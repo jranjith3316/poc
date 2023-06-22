@@ -582,3 +582,9 @@ private Map.Entry<String, Integer> getHostnamePort(String jdbcUrl) {
     return new AbstractMap.SimpleEntry<>(splitted[0], Integer.parseInt(splitted[1]));
 }
 
+
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
+import software.amazon.awssdk.regions.providers.DefaultAwsRegionProviderChain;
+import software.amazon.awssdk.services.rds.auth.RdsIamAuthTokenGenerator;
+import software.amazon.awssdk.services.rds.auth.model.GetIamAuthTokenRequest;
+
