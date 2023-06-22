@@ -668,3 +668,84 @@ public class RdsIamHikariDataSource extends HikariDataSource {
 }
 
 The type com.amazonaws.auth.AWSCredentialsProvider cannot be resolved. It is indirectly referenced from required .class files
+
+package com.liferay.fepoc.aws;
+
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
+import software.amazon.awssdk.regions.providers.DefaultAwsRegionProviderChain;
+import com.amazonaws.services.rds.auth.GetIamAuthTokenRequest;
+import com.amazonaws.services.rds.auth.RdsIamAuthTokenGenerator;
+
+import com.zaxxer.hikari.HikariDataSource;
+
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.AbstractMap;
+import java.util.Map;
+import java.util.Properties;
+
+public class RdsIamHikariDataSource extends HikariDataSource {
+
+    @Override
+    public String getPassword() {
+        return getToken();
+    }
+
+    private String getToken() {
+        try {
+            Context context = new InitialContext();
+            DataSource dataSource = (DataSource) context.lookup("java:/comp/env/jdbc/LiferayPool");
+            String jdbcUrl = dataSource.getConnection().getMetaData().getURL();
+            return generateAuthToken(jdbcUrl);
+        } catch (NamingException | SQLException e) {
+            // Handle the exception
+            return null;
+        }
+    }
+
+    private String generateAuthToken(String jdbcUrl) {
+    try {
+        var region = new DefaultAwsRegionProviderChain().getRegion();
+        var hostnamePort = getHostnamePort(jdbcUrl);
+        
+        AwsCredentialsProvider credentialsProvider = DefaultCredentialsProvider.create();
+
+        RdsIamAuthTokenGenerator generator = RdsIamAuthTokenGenerator.builder()
+            .credentials(credentialsProvider)
+            .region(region)
+            .build();
+
+        GetIamAuthTokenRequest request = GetIamAuthTokenRequest.builder()
+            .hostname(hostnamePort.getFirst())
+            .port(hostnamePort.getSecond())
+            .userName(getUsername())
+            .build();
+
+        return generator.getAuthToken(request);
+    } catch (Exception e) {
+        // Handle the exception
+        e.printStackTrace();
+        throw new SQLException("Failed to generate IAM authentication token", e);
+    }
+    }
+
+    private Map.Entry<String, Integer> getHostnamePort(String jdbcUrl) {
+    	 try {
+        var slashing = jdbcUrl.indexOf("//") + 2;
+        var sub = jdbcUrl.substring(slashing, jdbcUrl.indexOf("/", slashing));
+        var splitted = sub.split(":");
+        return new AbstractMap.SimpleEntry<>(splitted[0], Integer.parseInt(splitted[1]));
+    	 } catch (Exception e) {
+             // Handle the exception
+             e.printStackTrace();
+             throw new SQLException("Failed to extract hostname and port from JDBC URL", e);
+         }
+    }
+}
+
+
