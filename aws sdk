@@ -768,3 +768,6 @@ public class MainTest {
     }
 }
 
+
+[Root exception is java.lang.ClassCastException: class com.liferay.fepoc.aws.RdsIamHikariDataSource cannot be cast to class javax.naming.spi.ObjectFactory (com.liferay.fepoc.aws.RdsIamHikariDataSource is in unnamed module of loader java.net.URLClassLoader @4b85612c; javax.naming.spi.ObjectFactory is in module java.naming of loader 'bootstrap')]
+
